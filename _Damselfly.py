@@ -648,8 +648,9 @@ class EmacsEditRule(MappingRule):
         "describe variable" : XKey("m-x") + XText("describe-variable") + XKey("enter"),
         "clear": XKey("c-l"),
         "text mode" : XKey("m-x") + XText("text-mode") + XKey("enter"),
-        "mini" : XKey("s-o"),
-        "mini quit" : XKey("s-o,c-g"),
+        "mini" : XKey("w-o"),
+        "completions" : XKey("w-c"),
+        "mini quit" : XKey("w-o,c-g"),
         "eval" : XKey("c-x,c-e"),
         }
     extras = [
@@ -701,6 +702,7 @@ class EmacsDictRule(MappingRule):
         "command yank": XKey("c-y"),
         "command undo [<n>]" :  XKey("c-u,%(n)d,c-slash"),
         "command cast" : XKey("m-x"),
+        "shank <text>": XText("%(text)s"),
         "<text>" : XText("%(text)s"),
         }
     extras = [
@@ -713,7 +715,7 @@ class EmacsDictRule(MappingRule):
 
 class EmacsMinibufRule(MappingRule):
     mapping = {
-        "complete" : XKey("s-m"),
+        "complete" : XKey("w-m"),
         }
     
 #####################################
@@ -830,7 +832,7 @@ grammar.add_rule(BringEmacsRule(context = xcon))
 emacsDictContext = XAppContext('emacs:[^:].*:Text', usereg = True)
 grammar.add_rule(EmacsDictRule(context = emacsDictContext))
 
-emacsMinibufContext = XAppContext('emacs:\*Minibuf-[0-9]+\*:', usereg = True)
+emacsMinibufContext = XAppContext('emacs: \*Minibuf-[0-9]+\*:', usereg = True)
 grammar.add_rule(EmacsMinibufRule(context = emacsMinibufContext))
 
 ## readline grammar

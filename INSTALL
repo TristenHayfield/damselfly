@@ -1,0 +1,50 @@
+Damselfly depends on the following programs in order to function:
+
+Linux:
+
+Python 2.7.5 
+xdotool
+xprop
+xwininfo
+x11
+Wine (tested with 1.7.0)
+
+Windows:
+Python 2.7.5 
+pywin32-218 (http://sourceforge.net/projects/pywin32/)
+Dragon NaturallySpeaking (tested with 12.0)
+NatLink 4.1golf (http://qh.antenna.nl/unimacro/installation/installation.html)
+Dragonfly 0.6.5 (http://code.google.com/p/dragonfly/)
+
+At its core damselfly consists of a server and a client. The server is run under Linux and does the dirty work of sending keypresses and mouse clicks to X for the client, which is running under wine. The client and server communicate in plaintext through a simple pair of FIFOs.
+
+Damselfly consists of 2 Python scripts: DamselflyServer.py and
+_Damselfly.py; a config file: .damselfly.cfg, and a patch for
+keyboard.py from the dragonfly package, should it be needed.
+
+DamselflyServer.py can be installed to any directory in your path
+(e.g. $HOME/bin).  It is meant to be run from the command line (Linux
+python interpreter, not via Wine) with no arguments. Once executed it
+will create a pair of FIFOs and wait to communicate with the client in
+the NatLink directory.
+
+_Damselfly.py is the client script. You need to manually copy it to
+the NatLink directory. This directory is usually in a location such as
+/home/USERNAME/WINEPREFIX/drive_c/NatLink/NatLink/MacroSystem
+
+Once there, it will be automatically executed when Dragon
+NaturallySpeaking starts. When you create a custom grammar, or add
+your own commands, they need to be added to this file, and this file
+only. You cannot import this script into other Python files, or the
+results will be unpredictable. This is a limitation of the current
+implementation.
+
+The location of the NatLink directory is specified in the file
+.damselfly.cfg.  Edit this file and put it in your home directory.
+
+Finally, due to a possible bug in wine
+(http://bugs.winehq.org/show_bug.cgi?id=34481), you might have to
+apply the patch keyboard.diff to the file keyboard.py in the dragonfly
+library. This bug causes loading dragonfly to fail. If you find that
+you have this bug too, I would appreciate it if you leave a comment on
+the bug report confirming its presence on your platform.
