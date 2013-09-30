@@ -16,7 +16,11 @@ Dragon NaturallySpeaking (tested with 12.0)
 NatLink 4.1golf (http://qh.antenna.nl/unimacro/installation/installation.html)
 Dragonfly 0.6.5 (http://code.google.com/p/dragonfly/)
 
-At its core damselfly consists of a server and a client. The server is run under Linux and does the dirty work of sending keypresses and mouse clicks to X for the client, which is running under wine. The client and server communicate in plaintext through a simple pair of FIFOs.
+At its core damselfly consists of a server and a client. The server is
+run under Linux and does the dirty work of sending keypresses and
+mouse clicks to X for the client, which is running under wine. The
+client and server communicate in plaintext through a simple pair of
+FIFOs.
 
 Damselfly consists of 2 Python scripts: DamselflyServer.py and
 _Damselfly.py; a config file: .damselfly.cfg, and a patch for
