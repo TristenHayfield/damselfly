@@ -1,0 +1,22 @@
+111a112
+> 
+113c114,119
+<             raise ValueError("Unknown char: %r" % char)
+---
+>             if char == '(':
+>                 code = 313
+>             elif char == ')':
+>                 code = 304
+>             else:
+>                 raise ValueError("Unknown char: %r" % char)
+127a134
+> 
+129c136,141
+<             raise ValueError("Unknown char: %r" % char)
+---
+>             if char == '(':
+>                 code = 313
+>             elif char == ')':
+>                 code = 304
+>             else:
+>                 raise ValueError("Unknown char: %r" % char)
