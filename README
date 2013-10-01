@@ -1,30 +1,30 @@
-damselfly is a utility which allows one to use Dragon
+Damselfly is a utility which allows one to use Dragon
 NaturallySpeaking to provide input to X11 (under Linux)
 
-damselfly consists of 2 Python scripts, one which acts as a server and
-the other which acts as a client. the server runs on the Linux side
-and does the work of interacting with the windowing system . the
+Damselfly consists of 2 Python scripts, one which acts as a server and
+the other which acts as a client. The server runs on the Linux side
+and does the work of interacting with the windowing system. The
 client runs on the wine side and and handles command recognition and
-dispatching of commands to the server . the client and server
+dispatching of commands to the server. The client and server
 communicate via a pair of named pipes.
 
-basic installation and setup instructions can be found in the file
+Basic installation and setup instructions can be found in the file
 named INSTALL.
 
-damselfly implements a superset of the functionality provided by the
-dragonfly package.  damselfly does not override any of the classes
-provided by dragonfly, however it implements X aware equivalents where
-necessary.  therefore I am only documenting the differences between
-dragonfly and damselfly in this file. please also read the
-documentation for dragonfly found at
+Damselfly implements a superset of the functionality provided by the
+Dragonfly package.  Damselfly does not override any of the classes
+provided by Dragonfly, however it implements X aware equivalents where
+necessary.  Therefore I am only documenting the differences between
+Dragonfly and Damselfly in this file. Please also read the
+documentation for Dragonfly found at
 http://pythonhosted.org/dragonfly/
 
-the following are the new classes implemented by damselfly :
+The following are the new classes implemented by Damselfly :
 
-class XKey:
-this class functions the same as the Key class from dragonfly, except
+Class XKey:
+This class functions the same as the Key class from Dragonfly, except
 that a meta modifier has been added. Also the Windows key is mapped to
-the super key.  so the mapping for the modifier keys is:
+the super key.  So the mapping for the modifier keys is:
 
     'a' : 'alt'
     'c' : 'ctrl'
@@ -32,17 +32,17 @@ the super key.  so the mapping for the modifier keys is:
     'w' : 'super'
     'm' : 'meta' 
 
-class XText:
-this class functions the same as the Text class does in dragonfly 
+Class XText:
+This class functions the same as the Text class does in Dragonfly 
 
-the Paste class from dragonfly has no equivalent in damselfly 
+The Paste class from Dragonfly has no equivalent in Damselfly 
 
-class XMouse:
-this class functions the same as the Mouse class does in dragonfly,
-except that it also implements the mouse wheel buttons . so that gives
-us 5 different mouse buttons which we can click or press: 'left' ,
+Class XMouse:
+This class functions the same as the Mouse class does in Dragonfly,
+except that it also implements the mouse wheel buttons. There are
+5 different mouse buttons which we can click or press: 'left' ,
 'middle' , 'right' , 'wheel up' , and 'wheel down'
 
-classes WaitXWindow, BringXApp, StartXApp, FocusXWindow are used in
-the same way as their non-X dragonfly equivalents
+Classes WaitXWindow, BringXApp, StartXApp, FocusXWindow are used in
+the same way as their non-X Dragonfly equivalents.
 
