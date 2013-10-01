@@ -564,6 +564,7 @@ class EmacsEditRule(MappingRule):
         "del [<n>]" : XKey("del:%(n)d"),
         "rub [<n>]": XKey("backspace:%(n)d"),
         "kill [<n>]": XKey("c-u,%(n)d,c-k"),
+        "kill line": XKey("home,c-k"),
         "slay [<n>]": XKey("c-u,%(n)d,a-d"),
         "snuff [<n>]": XKey("c-u,%(n)d,a-backspace"),
         "yank": XKey("c-y"),
@@ -651,6 +652,7 @@ class EmacsEditRule(MappingRule):
         "mini" : XKey("w-o"),
         "completions" : XKey("w-c"),
         "mini quit" : XKey("w-o,c-g"),
+        "up case" : XKey("a-c"),
         "eval" : XKey("c-x,c-e"),
         }
     extras = [
@@ -676,10 +678,14 @@ class EmacsDictRule(MappingRule):
         "command open": XKey("c-x,c-f"),
         "command open <text>": XKey("c-x,c-f,tab:2,w-c,c-s")+XText("%(text)s"),
         "command swap": XKey("c-x,o"),
+        "command split" : XKey("c-x,3"),
         "command buff" : XKey("c-x,b"),
         "command buff <text>" : XKey("c-x,b,c-s") + XText("%(text)s") + XKey("enter:2"),
         "command buffer" : XKey("c-x,b,enter"),
         "command fundamental mode" : XKey("m-x") + XText("fundamental-mode") + XKey("enter"),
+        "command home" : XKey("home"),
+        "command end" : XKey("end"),
+        "command enter" : XKey("enter"),
         "command up [<n>]" : XKey("up:%(n)d"),
         "command down [<n>]" : XKey("down:%(n)d"),
         "command left [<n>]" : XKey("left:%(n)d"),
@@ -702,8 +708,9 @@ class EmacsDictRule(MappingRule):
         "command yank": XKey("c-y"),
         "command undo [<n>]" :  XKey("c-u,%(n)d,c-slash"),
         "command cast" : XKey("m-x"),
-        "shank <text>": XText("%(text)s"),
-        "<text>" : XText("%(text)s"),
+        "up case" : XKey("a-c"),
+        "shank <text>": XText("%(text)s")+XKey("space"),
+        "<text>" : XText("%(text)s")+XKey("space"),
         }
     extras = [
         IntegerRef("n", 1, 20),                
@@ -821,11 +828,11 @@ grammar.add_rule(DNSOverride())
 grammar.add_rule(WMRule(context = xcon))
 
 ## charkey grammar
-charContext = XAppContext("(emacs(?![^:].*:Text)|xterm)", usereg = True)
+charContext = XAppContext("(emacs:(?![^:].*:Text)|xterm)", usereg = True)
 grammar.add_rule(CharkeyRule(context = charContext))
 
 ## emacs grammar
-emacsContext = XAppContext('emacs(?![^:].*:Text)', usereg = True)
+emacsContext = XAppContext('emacs:(?![^:].*:Text)', usereg = True)
 grammar.add_rule(EmacsEditRule(context=emacsContext))
 grammar.add_rule(BringEmacsRule(context = xcon))
 
