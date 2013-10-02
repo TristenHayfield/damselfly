@@ -36,6 +36,12 @@ _Damselfly.py is the client script. You need to manually copy it to
 the NatLink directory. This directory is usually in a location such as
 /home/USERNAME/WINEPREFIX/drive_c/NatLink/NatLink/MacroSystem
 
+_Damselfly.py only has a bare-bones grammar implemented by
+default. _Damselfly-example.py has a couple of grammars in it and
+following its example should help you get started in customizing your
+own system. DO NOT ADD MORE THAN ONE DAMSELFLY PYTHON FILE TO YOUR
+MacroSystem/ DIRECTORY
+
 Once there, it will be automatically executed when Dragon
 NaturallySpeaking starts. When you create a custom grammar, or add
 your own commands, they need to be added to this file, and this file
