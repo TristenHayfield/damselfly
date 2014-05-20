@@ -23,6 +23,7 @@ import subprocess
 import re
 import time
 import signal
+from Tkinter import *
 
 myName = 'DamselflyServer'
 myVersion='2013-09-30'
@@ -51,8 +52,8 @@ fpI = None
 ep = select.epoll()
 
 # precompiled regular expressions for use by various command handlers
-prewmc = re.compile(r'^WM_CLASS\(STRING\) = "([A-Za-z0-9._]*)", "([A-Za-z0-9._]*)"$', re.M)
-prewmnm = re.compile(r'^WM_NAME\(STRING\) = "(.*)"$', re.M)
+prewmc = re.compile(r'^WM_CLASS\((STRING|COMPOUND_TEXT|UTF8_STRING)\) = "([A-Za-z0-9._]*)", "([A-Za-z0-9._]*)"$', re.M)
+prewmnm = re.compile(r'^WM_NAME\((STRING|COMPOUND_TEXT|UTF8_STRING)\) = "(.*)"$', re.M)
 
 # here there be dragons: re's for parsing key commands
 prekey = re.compile("^ *(?:([acswm]+)-)?([a-zA-Z0-9]+)(?:[/]([0-9]+(?=:[0-9]+)))?(?:[:]([0-9]+))?(?:[/]([0-9]+))? *$")
@@ -209,12 +210,12 @@ def getXCtx(name):
         wmc = prewmc.search(xp)
         wmnm = prewmnm.search(xp)
         if wmc:
-            wmc = wmc.groups()[0] + ' ' + wmc.groups()[1]
+            wmc = wmc.groups()[1] + ' ' + wmc.groups()[2]
         else:
             wmc = ''
 
         if wmnm:
-            wmnm = wmnm.groups()[0]
+            wmnm = wmnm.groups()[1]
         else:
             wmnm = ''
 
@@ -1036,6 +1037,7 @@ def bringXApp(name):
         fpO.flush()
         stopped = True
 
+        
 fdic = { 
     "getXCtx": getXCtx, 
     "sendXText" : sendXText,

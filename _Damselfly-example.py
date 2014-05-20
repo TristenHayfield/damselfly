@@ -19,7 +19,7 @@ import sys
 import re
 
 from dragonfly import (Grammar, Rule, MappingRule, CompoundRule,
-                       Dictation, IntegerRef, Context, ActionBase)
+                       Dictation, IntegerRef, Context, ActionBase, Function)
 
 from dragonfly.actions.action_base import DynStrActionBase
 
@@ -178,7 +178,7 @@ class XAppContext(Context):
             self.myCmp = strCmp
 
         self.emptyCtx = (wmname is None) & (wmclass is None) & (wid is None) 
-        self._str = "name: " + str(wmname) + ", " + "class: " + str(wmclass) + ", " + "id: " + str(wid)
+        self._str = u"name: " + unicode(wmname) + u", " + u"class: " + unicode(wmclass) + u", " + u"id: " + unicode(wid)
 
 
     def matches(self, executable, title, handle):
@@ -200,17 +200,17 @@ class XAppContext(Context):
                     return False
 
                 if self.either:
-                    iMatch &= self.myCmp(self.wmname, ctx[0]) | self.myCmp(self.wmclass, ctx[1])
+                    iMatch &= self.myCmp(self.wmname, ctx[0].decode("utf-8")) | self.myCmp(self.wmclass, ctx[1].decode("utf-8"))
                 else:
                     if self.wmname:                   
-                        iMatch &= self.myCmp(self.wmname, ctx[0])
+                        iMatch &= self.myCmp(self.wmname, ctx[0].decode("utf-8"))
 
                     if self.wmclass:
-                        iMatch &= self.myCmp(self.wmclass, ctx[1])
+                        iMatch &= self.myCmp(self.wmclass, ctx[1].decode("utf-8"))
                 
                     
                 if self.wid:
-                    iMatch &= (ctx[2] == self.wid)
+                    iMatch &= (ctx[2].decode("utf-8") == self.wid)
 
                 return iMatch
         else :
@@ -362,11 +362,13 @@ class XMouse(DynStrActionBase):
 
 ## neither autoformat nor pause are considered atm
 class XText(DynStrActionBase):
-    def __init__(self, spec, static = False, space = True, title = False, upper = False):
+    def __init__(self, spec, static = False, space = True, title = False, upper = False, lower = False, replace = ''):
         DynStrActionBase.__init__(self, spec = str(spec), static = static)
         self.space = space
         self.title = title
         self.upper = upper
+        self.lower = lower
+        self.replace = replace
 
     def _parse_spec(self, spec):
         self._pspec = spec
@@ -378,9 +380,11 @@ class XText(DynStrActionBase):
             tspec = tspec.title()
         elif self.upper:
             tspec = tspec.upper()
+        elif self.lower:
+            tspec = tspec.lower()
             
         if not self.space:
-            tspec = tspec.replace(' ','')
+            tspec = tspec.replace(' ',self.replace)
             
         mymess = 'sendXText\n' + tspec + '\n'
         return(dispatchAndHandle(mymess))
@@ -416,6 +420,64 @@ class ResumeRule(CompoundRule):
         resumeServer()
         print 'Resumed.'
 
+class IgnoreRule(MappingRule):
+    mapping = {
+        "<text>" : DoNothing(),
+        }
+    extras = [
+        Dictation("text")
+        ]
+
+myIgnore = IgnoreRule()
+
+def unignore():
+    myIgnore.disable()
+
+def ignore():
+    myIgnore.enable()
+
+class DictateRule(MappingRule):
+    mapping = {
+        "<text>" : XText("%(text)s"),
+        }
+    extras = [
+        Dictation("text")
+        ]
+
+myDictate = DictateRule()
+
+def undictate():
+    myDictate.disable()
+
+def dictate():
+    myDictate.enable()
+
+
+#####################################
+# file
+#####################################
+
+class FileRule(MappingRule):
+    mapping = {
+        "user":XText("usr"),
+        "(bin|been)" : XText("bin"),
+        "Lib" : XText("lib"),
+        "et cetera" : XText("etc"),
+        "temp" : XText("tmp"),
+        "variable" : XText("var"),
+        "optional" : XText("opt"),
+        "mount" : XText("mnt"),
+        "previous" : XText(".."),
+        }
+        
+myFile = FileRule()
+
+def stopfile():
+    myFile.disable()
+
+def startfile():
+    myFile.enable()
+
 # rudimentary wm control
 class WMRule(MappingRule):
     mapping = {
@@ -428,7 +490,8 @@ class WMRule(MappingRule):
     extras = [
         Dictation("text")
         ]
-    
+
+            
 # these rules consume events which could cause dragon to hang or behave
 # strangely in linux
 
@@ -480,16 +543,17 @@ class CharkeyRule(MappingRule):
         "xray" : XKey("x"),
         "yankee" : XKey("y"),
         "Zulu" : XKey("z"),
-        "one" : XKey("1"),
-        "(to | two | too)" : XKey("2"),
-        "three" : XKey("3"),
-        "four" : XKey("4"),
-        "five" : XKey("5"),
-        "six" : XKey("6"),
-        "seven" : XKey("7"),
-        "eight" : XKey("8"),
-        "nine" : XKey("9"),
-        "zero" : XKey("0"),
+        "<n>" : XText("%(n)d"),
+##        "one" : XKey("1"),
+##        "(to | two | too)" : XKey("2"),
+##        "three" : XKey("3"),
+##        "four" : XKey("4"),
+##        "five" : XKey("5"),
+##        "six" : XKey("6"),
+##        "seven" : XKey("7"),
+##        "eight" : XKey("8"),
+##        "nine" : XKey("9"),
+##        "zero" : XKey("0"),
         "dot" : XText("."),
         "plus" : XText("+"),
         "(minus | hyphen)" : XText("-"),
@@ -527,13 +591,16 @@ class CharkeyRule(MappingRule):
         "space" : XKey("space"),
         "quote" : XKey("dquote"),
         "tick" : XKey("squote"),
-        "dirk <text>" : XText("%(text)s", space = False),
+        "dirk <text>" : XText("%(text)s", space = False, lower = True),
+        "bridge <text>" : XText("%(text)s", space = False, replace = '_', lower = True),
         "camel <text>" : XText("%(text)s", space = False, title = True),
         "caps <text>" :  XText("%(text)s", space = False, upper = True),
+        "defcon <text>" :  XText("%(text)s", space = False, upper = True, replace = '_'),
         "shank <text>": XText("%(text)s"),
         }
     extras = [
         Dictation("text"),
+        IntegerRef("n", 0, 999999),
         ]
         
 ########################################
@@ -549,12 +616,12 @@ class EmacsEditRule(MappingRule):
         "page [<n>]": XKey("pgdown:%(n)d"),
         "leaf [<n>]": XKey("pgup:%(n)d"),
         "tab [<n>]" : XKey("tab:%(n)d"),
-        "page right": XKey("ca-v"),
-        "leaf right": XKey("cas-v"),
+        "page other": XKey("ca-v"),
+        "leaf other": XKey("cas-v"),
         "top" : XKey("c-home"),
         "bottom" : XKey("m-rangle"),
-        "top right" : XKey("m-home"),
-        "bottom right" : XKey("m-end"),
+        "top other" : XKey("m-home"),
+        "bottom other" : XKey("m-end"),
         "word [<n>]" :  XKey("c-u,%(n)d,a-f"),
         "vow [<n>]" :  XKey("c-u,%(n)d,a-b"),
         "skip [<n>]" :  XKey("c-u,%(n)d,ca-f"),
@@ -590,25 +657,30 @@ class EmacsEditRule(MappingRule):
         "limbo" : XKey("c-x,2"),
         "split" : XKey("c-x,3"),
         "goto" : XKey("m-g,g"),
+        "goto <l>" : XKey("m-g,g") + XText("%(l)d") + XKey("enter"),
         "undo [<n>]" :  XKey("c-u,%(n)d,c-slash"),
         "exit stage": XKey("c-x,c-c"),
         "find" : XKey("c-s"),
-        "find <text>" : XKey("c-s") + XText("%(text)s"),
+        "find <text>" : XKey("c-s") + XText("%(text)s", lower=True),
         "scout" : XKey("c-r"),
-        "scout <text>" : XKey("c-r") + XText("%(text)s"),
+        "scout <text>" : XKey("c-r") + XText("%(text)s", lower=True),
         "hunt" : XKey("ca-s"),
         "track": XKey("cm-r"),
         "grill": XKey("m-percent"),
         "grill <text>": XKey("m-percent") + XText("%(text)s"),
         "grill <text> with <other>" : XKey("m-percent") + XText("%(text)s") + XKey("enter") + XText("%(other)s")+ XKey("enter"),
         "query": XKey("cm-percent"),
+        "transmute" : XKey("m-x") + XText("replace-regexp") + XKey("enter"),
         "sub" : XKey("m-x") + XText("replace-string") + XKey("enter"),
         "sub <text> with <other>" : XKey("m-x") + XText("replace-string") + XKey("enter") + XText("%(text)s") + XKey("enter") + XText("%(other)s")+ XKey("enter"),
+        "sub <text> with yank" : XKey("m-x") + XText("replace-string") + XKey("enter") + XText("%(text)s") + XKey("enter,c-y,enter"),
         "manual" : XKey("m-x") + XText("man") + XKey("enter"),
         "manual <text>" : XKey("m-x") + XText("man") + XKey("enter") + XText("%(text)s"),
         "macro start" : XKey("c-x,lparen"),
         "macro end" : XKey("c-x,rparen"),
         "macro do" : XKey("c-x,e"),
+        "macro insert" : XKey("m-x") + XText("insert-kbd-macro") + XKey("enter"),
+        "macro insert <text>" : XKey("m-x") + XText("insert-kbd-macro") + XKey("enter") + XText("%(text)s") + XKey("enter"),
         "macro name" : XKey("c-x,c-k,n"),
         "macro name <text>" : XKey("c-x,c-k,n") + XText("%(text)s") + XKey("enter"),
         "tap": XText("e"),
@@ -644,7 +716,7 @@ class EmacsEditRule(MappingRule):
         "allude": XKey("squote:2,left"),
         "allude <text>": XText("'%(text)s'"),
         "apropos" : XKey("m-x") + XText("apropos") + XKey("enter"),
-        "apropos <text>" : XKey("m-x") + XText("apropos") + XKey("enter") + XText("%(text)s") + XKey("enter"),
+        "apropos <text>" : XKey("m-x") + XText("apropos") + XKey("enter") + XText("%(text)s", space=False, replace="-") + XKey("enter"),
         "describe function" : XKey("m-x") + XText("describe-function") + XKey("enter"),
         "describe variable" : XKey("m-x") + XText("describe-variable") + XKey("enter"),
         "clear": XKey("c-l"),
@@ -653,10 +725,15 @@ class EmacsEditRule(MappingRule):
         "completions" : XKey("w-c"),
         "mini quit" : XKey("w-o,c-g"),
         "up case" : XKey("a-c"),
-        "eval" : XKey("c-x,c-e"),
+        "evaluate" : XKey("c-x,c-e"),
+        "edit" : XKey("a-e"),
+        "sensitive" : XKey("a-c"),
+        "yay" : XKey("y"),
+        "nay" : XKey("n"),
         }
     extras = [
-        IntegerRef("n", 1, 20),
+        IntegerRef("n", 1, 99),
+        IntegerRef("l", 0, 99999),
         Dictation("text"),
         Dictation("other"),
         ]
@@ -669,6 +746,14 @@ class BringEmacsRule(CompoundRule):
 
     def _process_recognition(self, node, extras):
         res = BringXApp('emacs').execute()
+        if res == False:
+            resumeServer()
+
+class StartConsoleRule(CompoundRule):            
+    spec = "start console"
+
+    def _process_recognition(self, node, extras):
+        res = StartXApp('konsole').execute()
         if res == False:
             resumeServer()
 
@@ -692,12 +777,12 @@ class EmacsDictRule(MappingRule):
         "command right [<n>]" : XKey("right:%(n)d"),
         "command page [<n>]": XKey("pgdown:%(n)d"),
         "command leaf [<n>]": XKey("pgup:%(n)d"),
-        "command page right": XKey("ca-v"),
-        "command leaf right": XKey("cas-v"),
+        "command page other": XKey("ca-v"),
+        "command leaf other": XKey("cas-v"),
         "command top" : XKey("c-home"),
         "command bottom" : XKey("m-rangle"),
-        "command top right" : XKey("m-home"),
-        "command bottom right" : XKey("m-end"),
+        "command top other" : XKey("m-home"),
+        "command bottom other" : XKey("m-end"),
         "command word [<n>]" :  XKey("c-u,%(n)d,a-f"),
         "command vow [<n>]" :  XKey("c-u,%(n)d,a-b"),
         "command del [<n>]" : XKey("del:%(n)d"),
@@ -713,7 +798,7 @@ class EmacsDictRule(MappingRule):
         "<text>" : XText("%(text)s")+XKey("space"),
         }
     extras = [
-        IntegerRef("n", 1, 20),                
+        IntegerRef("n", 1, 99),                
         Dictation("text"),
         ]
     defaults = {
@@ -723,6 +808,69 @@ class EmacsDictRule(MappingRule):
 class EmacsMinibufRule(MappingRule):
     mapping = {
         "complete" : XKey("w-m"),
+        }
+
+class PythonLanguageRule(MappingRule):
+    mapping = {
+        "class" : XText("class "),
+        "class <text> inherits <name>" : XText("class") + XKey('space') + XText("%(text)s(%(name)s):",space = False, title = True),
+        "define" : XText("def "),
+        "define constructor" : XText("def __init__(self,):")  + XKey("left:2"),
+        "define <text>" : XText("def %(text)s():") + XKey("left:2"),
+        "none" : XText("None"),
+        "true" : XText("True"),
+        "false" : XText("False"),
+        "import" : XText("import "),
+        "import all": XText("from  import *") + XKey("left:9"),
+        "from <name> import <other>" : XText("from %(text)s import ") + XText("(%(name)s)",space = False, title = True),
+        "print" : XText("print "),
+        "global" : XText("global "),
+        "try" : XText("try:"),
+        "comment" : XText("## "),
+        "comment <text>" : XText("## %(text)s"),
+        }
+    extras = [
+        Dictation("text"),
+        Dictation("name"),
+        ]
+
+                
+#######################################
+## C : C language emacs rules
+#######################################
+
+class CLanguageRule(MappingRule):
+    mapping = {
+        "block" : XKey("lbrace,home,down,enter,up,rbrace,home,enter,up,tab"),
+        "else" : XText("else"),
+        "else block" : XText("else ") + XKey("lbrace,home,down,enter,up,rbrace,home,enter,up,tab"),
+        "else if" : XText("else if()") + XKey("left"),
+        "else if block" : XText("else if()") + XKey("lbrace,home,down,enter,up,rbrace,home,enter,up,tab,a-f:2,right"),
+        "if" : XText("if()") + XKey("left"),
+        "if block" : XText("if()") + XKey("lbrace,home,down,enter,up,rbrace,home,enter,up,tab,up,right"),
+        "fear" : XText("for(;;)") + XKey("left:3"),
+        "fear block" : XText("for(;;) ") + XKey("lbrace,home,down,enter,up,rbrace,home,enter,up,tab,up,right:2"),
+        "while" : XText("while()") + XKey("left"),
+        "while block" : XText("while() ") + XKey("lbrace,home,down,enter,up,rbrace,home,enter,up,tab"),
+        "void" : XText("void"),
+        "double" : XText("double"),
+        "constant" : XText("const"),
+        "integer" : XText("int"),
+        "return" : XText("return"),
+        "equality" : XText("=="),
+        "inequality" : XText("!="),
+        "logical and" : XText("&&"),
+        "logical or" : XText("||"),
+        "increment" : XText("++"),
+        "grow" : XText("+="),
+        "shrink" : XText("-="),
+        "scale" : XText("*="),
+        "dilate" : XText("/="),
+        "null" : XText("NULL"),
+        "size of" : XText("sizeof()") + XKey("left"),
+        "define" : XText("#define"),
+        "include" : XText("#include <>") + XKey("left"),
+        "comment" : XText("//"),
         }
     
 #####################################
@@ -784,13 +932,12 @@ class ReadLineRule(MappingRule):
         "break": XKey("c-c"),
         }
     extras = [
-        IntegerRef("n", 1, 20),
+        IntegerRef("n", 1, 99),
         Dictation("text"),
         ]
     defaults = {
         "n": 1,
         }
-
 
 #####################################
 # bash
@@ -798,8 +945,8 @@ class ReadLineRule(MappingRule):
 
 class BashRule(MappingRule):
     mapping = {
-        'seedy' : XText('cd'),
-        'seedy <dest> done' : XText('cd %(text)s') + XKey('enter'),
+        'cd' : XText('cd'),
+        'cd <text> done' : XText('cd %(text)s') + XKey('enter'),
         'pause' : XKey('c-z'),
         'resume' : XText('fg'),
         'resume done' : XText('fg') + XKey('enter'), 
@@ -808,6 +955,7 @@ class BashRule(MappingRule):
         'help' : XText('help'),
         'help done' : XText('help') + XKey('enter'),     
         'list'  : XText('ls'),
+        'list all'  : XText('ls -la'),
         'offer' : XKey('m-question'),
         'give' : XKey('c-m-a'),
         'dump' : XKey('m-star'),
@@ -816,7 +964,65 @@ class BashRule(MappingRule):
         'move' : XText('mv'),
         'parent' : XText('../'),
         'erase' : XText('rm'),
+        'touch' : XText('touch'),
+        'touch <text>' : XText('touch %(text)s'),
+        'make directory' : XText('mkdir'),
+        'make directory <text>' : XText('mkdir %(text)s'),
+        'remove directory' : XText('rmdir'),
+        'remove directory <text>' : XText('rmdir %(text)s'),
+        'git' : XText('git'),
+        'git status' : XText('git status'),
+        'git check out' : XText('git checkout'),
+        'git commit' : XText('git commit'),
+        'git commit all' : XText('git commit -a'),
+        'git branch' : XText('git branch'),
+        'git merge' : XText('git merge'),
+        'git diff' : XText('git diff'),
+        'git log' : XText('git log'),
+        'git pull' : XText('git pull'),
+        'git push' : XText('git push'),
+        "are" : XText("R"),
+        "debug are" : XText("R -d gdb"),
+        'valgrind are' : XText('R -d "valgrind --tool=memcheck --leak-check=full --vgdb=yes --vgdb-error=0"'),
+        "are command batch" : XText("R CMD BATCH"),
+        "are no save" : XText("R --no-save"),
+        "permissions" : XText("chmod"),
+        "permissions set executable" : XText("chmod u+x"),
+        "permissions set all executable" : XText("chmod +x"),
         }
+    extras = [
+        Dictation("text"),
+        ]
+
+class GdbRule(MappingRule):
+    mapping = {
+        "breakpoint" : XText("b"),
+        "continue" : XText("c"),
+        "backtrace" : XText("bt"),
+        "frame" : XText("f"),
+        "print" : XText("p"),
+        "set" : XText("set"),
+        "display" : XText("display"),
+        "delete" : XText("delete"),
+        "next" : XText("n"),
+        "step" : XText("s"),
+        "list" : XText("l"),
+        "terminate" : XText("k"),
+        "run" : XText("r"),
+        "exit" : XText("q"),
+        "help" : XText("help"),
+        }
+        
+class ControllerRule(MappingRule):
+    mapping = {
+        "start ignore" : Function(ignore),
+        "stop ignore" : Function(unignore),
+        "dictate" : Function(unignore) + Function(dictate),
+        "stop dictate" : Function(ignore) + Function(undictate),
+        "start file" : Function(startfile),
+        "stop file" : Function(stopfile),
+        }
+
     
 ## construct one grammar to rule them all
 xcon = XAppContext()
@@ -824,17 +1030,22 @@ grammar = Grammar("Damselfly")
 grammar.add_rule(ConnectRule())                     
 grammar.add_rule(DisconnectRule())
 grammar.add_rule(ResumeRule())
+grammar.add_rule(ControllerRule())
 grammar.add_rule(DNSOverride())
 grammar.add_rule(WMRule(context = xcon))
 
 ## charkey grammar
-charContext = XAppContext("(emacs:(?![^:].*:Text)|xterm)", usereg = True)
+charContext = XAppContext(u"(emacs:(?![^:].*:Text)|xterm|.*: (R|gdb|bash) \u2013 Konsole$)", usereg = True)
 grammar.add_rule(CharkeyRule(context = charContext))
 
 ## emacs grammar
 emacsContext = XAppContext('emacs:(?![^:].*:Text)', usereg = True)
 grammar.add_rule(EmacsEditRule(context=emacsContext))
 grammar.add_rule(BringEmacsRule(context = xcon))
+grammar.add_rule(StartConsoleRule(context = xcon))
+
+emacsCContext = XAppContext('emacs:[^:].*:C/l$', usereg = True)
+grammar.add_rule(CLanguageRule(context=emacsCContext))
 
 emacsDictContext = XAppContext('emacs:[^:].*:Text', usereg = True)
 grammar.add_rule(EmacsDictRule(context = emacsDictContext))
@@ -843,15 +1054,27 @@ emacsMinibufContext = XAppContext('emacs: \*Minibuf-[0-9]+\*:', usereg = True)
 grammar.add_rule(EmacsMinibufRule(context = emacsMinibufContext))
 
 ## readline grammar
-rlContext = XAppContext("xterm")
+rlContext = XAppContext(u"(xterm|.*: (R|gdb|bash) \u2013 Konsole$)", usereg = True)
 grammar.add_rule(ReadLineRule(context = rlContext))
 
 ## bash grammar
-##rlContext = XAppContext("xterm")
+emacsShellContext = XAppContext(u'(emacs:[^:].*:Shell|xterm|.*: bash \u2013 Konsole$)', usereg = True)
+grammar.add_rule(BashRule(context = emacsShellContext))
+
+## gdb grammar
+GdbContext = XAppContext(u'gdb \u2013 Konsole$', usereg = True)
+grammar.add_rule(GdbRule(context =GdbContext))
+
+PythonShellContext = XAppContext('emacs:[^:].*:Py', usereg = True)
+grammar.add_rule(PythonLanguageRule(context = PythonShellContext))
+
+
+
+###rlContext = XAppContext("xterm")
 ##grammar.add_rule(BashRule(context = rlContext))
 
 def unload():
-    global xcon, charContext, emacsContext, emacsDictContext
+    global xcon, charContext, emacsContext, emacsDictContext, emacsCContext
     global emacsMinibufContext, rlContext, windowCache
 
     disconnect()
@@ -861,6 +1084,7 @@ def unload():
     charContext = None
 
     emacsContext = None
+    emacsCContext = None
     emacsDictContext = None
     emacsMinibufContext = None
 
@@ -871,5 +1095,13 @@ def unload():
     if grammar.loaded:
         grammar.unload()
 
+myFile.disable()
+grammar.add_rule(myFile)
 
+myDictate.disable()
+grammar.add_rule(myDictate)
+
+grammar.add_rule(myIgnore)
 grammar.load()                                   
+
+

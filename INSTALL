@@ -7,13 +7,21 @@ xdotool
 xprop
 xwininfo
 x11
-Wine (tested with 1.7.0)
+Wine (tested with 1.7.12)
+
+Wine notes:
+- use the 32-bit winearch.
+- only tested with windows version set to XP.
+- winetricks gdiplus is recommended but not necessary for basic 
+  graphics support (otherwise e.g. the little recognition animation won't work)
+- winetricks allfonts is recommended but not necessary
 
 Windows:
 Python 2.7.5 
+wxPython 3.0 (for NatLink configuration GUI)
 pywin32-218 (http://sourceforge.net/projects/pywin32/)
 Dragon NaturallySpeaking (tested with 12.0)
-NatLink 4.1golf (http://qh.antenna.nl/unimacro/installation/installation.html)
+NatLink 4.1india (http://qh.antenna.nl/unimacro/installation/installation.html)
 Dragonfly 0.6.5 (http://code.google.com/p/dragonfly/)
 
 At its core damselfly consists of a server and a client. The server is
@@ -34,7 +42,7 @@ the NatLink directory.
 
 _Damselfly.py is the client script. You need to manually copy it to
 the NatLink directory. This directory is usually in a location such as
-/home/USERNAME/WINEPREFIX/drive_c/NatLink/NatLink/MacroSystem
+$HOME/$WINEPREFIX/drive_c/NatLink/NatLink/MacroSystem
 
 _Damselfly.py only has a bare-bones grammar implemented by
 default. _Damselfly-example.py has a couple of grammars in it and
@@ -55,6 +63,7 @@ The location of the NatLink directory is specified in the file
 Finally, due to a possible bug in wine
 (http://bugs.winehq.org/show_bug.cgi?id=34481), you might have to
 apply the patch keyboard.diff to the file keyboard.py in the dragonfly
-library. This bug causes loading dragonfly to fail. If you find that
+library (usually located at: $HOME/$WINEPREFIX/drive_c/Python27/Lib/site-packages/dragonfly/actions/keyboard.py).
+This bug causes loading dragonfly to fail. If you find that
 you have this bug too, I would appreciate it if you leave a comment on
 the bug report confirming its presence on your platform.
