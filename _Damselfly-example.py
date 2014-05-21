@@ -360,6 +360,14 @@ class XMouse(DynStrActionBase):
         self._pspec = spec
         return self
 
+class InputAlias(ActionBase):
+    def __init__(self):
+        ActionBase.__init__(self)
+
+    def _execute(self, data=None):
+        mymess = 'inputAlias\n'
+        return(dispatchAndHandle(mymess))
+
 ## neither autoformat nor pause are considered atm
 class XText(DynStrActionBase):
     def __init__(self, spec, static = False, space = True, title = False, upper = False, lower = False, replace = ''):
@@ -452,7 +460,13 @@ def undictate():
 def dictate():
     myDictate.enable()
 
+class AliasRule(CompoundRule):
+    spec = "damselfly alias"
 
+    def _process_recognition(self, node, extras):
+        result=InputAlias().execute()
+        print 'result: ',result
+        
 #####################################
 # file
 #####################################
@@ -467,6 +481,7 @@ class FileRule(MappingRule):
         "variable" : XText("var"),
         "optional" : XText("opt"),
         "mount" : XText("mnt"),
+        "source" : XText("src"),
         "previous" : XText(".."),
         }
         
@@ -630,14 +645,15 @@ class EmacsEditRule(MappingRule):
         "whence [<n>]" :  XKey("c-u,%(n)d,a-a"),
         "del [<n>]" : XKey("del:%(n)d"),
         "rub [<n>]": XKey("backspace:%(n)d"),
-        "kill [<n>]": XKey("c-u,%(n)d,c-k"),
+        "kill": XKey("c-k"),
+        "kill <n>": XKey("c-u,%(n)d,c-k"),
         "kill line": XKey("home,c-k"),
         "slay [<n>]": XKey("c-u,%(n)d,a-d"),
         "snuff [<n>]": XKey("c-u,%(n)d,a-backspace"),
         "yank": XKey("c-y"),
         "pull [<n>]": XKey("c-u,%(n)d,m-y"),
-        "cram": XKey("home,down,enter,up,c-y"),
-        "wedge": XKey("home,enter,up,c-y"),
+        "cram": XKey("end,enter,c-y"),
+        "wedge": XKey("up,end,enter,c-y"),
         "save": XKey("c-x,c-s"),
         "open": XKey("c-x,c-f"),
         "open <text>": XKey("c-x,c-f,tab:2,w-c,c-s")+XText("%(text)s"),
@@ -730,6 +746,7 @@ class EmacsEditRule(MappingRule):
         "sensitive" : XKey("a-c"),
         "yay" : XKey("y"),
         "nay" : XKey("n"),
+        "begin":XKey("m-x")  + XText("goto-first-nonblank") + XKey("enter"),
         }
     extras = [
         IntegerRef("n", 1, 99),
@@ -813,21 +830,31 @@ class EmacsMinibufRule(MappingRule):
 class PythonLanguageRule(MappingRule):
     mapping = {
         "class" : XText("class "),
+        "class <text>" : XText("class") + XKey('space') + XText("%(text)s:",space = False, title = True),
         "class <text> inherits <name>" : XText("class") + XKey('space') + XText("%(text)s(%(name)s):",space = False, title = True),
-        "define" : XText("def "),
+        "constructor" : XText("__init__(self)"),
+        "define" : XText("def") + XKey('space'),
+        "equality" : XText("=="),
         "define constructor" : XText("def __init__(self,):")  + XKey("left:2"),
-        "define <text>" : XText("def %(text)s():") + XKey("left:2"),
+        "define <text>" : XText("def")+ XKey('space') + XText("%(text)s():",space=False) + XKey("left:2"),
+        "define method <text>" : XText("def %(text)s(self,):") + XKey("left:2"),
         "none" : XText("None"),
         "true" : XText("True"),
         "false" : XText("False"),
-        "import" : XText("import "),
+        "else" : XText("else:"),
+        "if <text>" : XText("if %(text)s:"),
+        "import" : XText("import") + XKey('space'),
+        "import <text>" : XText("import %(text)s"),
         "import all": XText("from  import *") + XKey("left:9"),
-        "from <name> import <other>" : XText("from %(text)s import ") + XText("(%(name)s)",space = False, title = True),
-        "print" : XText("print "),
-        "global" : XText("global "),
+        "from <text> import <name>" : XText("from %(text)s import ") + XText("(%(name)s)",space = False, title = True),
+        "print" : XText("print") + XKey('space'),
+        "global" : XText("global") + XKey('space'),
         "try" : XText("try:"),
-        "comment" : XText("## "),
+        "comment" : XText("##") + XKey('space'),
         "comment <text>" : XText("## %(text)s"),
+        "promote":XKey("c-c,c-r"),
+        "demote":XKey("c-c,c-l"),
+        "burgle":XKey("ca-h,a-w"),
         }
     extras = [
         Dictation("text"),
@@ -1027,7 +1054,8 @@ class ControllerRule(MappingRule):
 ## construct one grammar to rule them all
 xcon = XAppContext()
 grammar = Grammar("Damselfly")
-grammar.add_rule(ConnectRule())                     
+grammar.add_rule(ConnectRule())
+grammar.add_rule(AliasRule())                     
 grammar.add_rule(DisconnectRule())
 grammar.add_rule(ResumeRule())
 grammar.add_rule(ControllerRule())

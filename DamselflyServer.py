@@ -24,6 +24,7 @@ import re
 import time
 import signal
 from Tkinter import *
+import threading
 
 myName = 'DamselflyServer'
 myVersion='2013-09-30'
@@ -73,6 +74,59 @@ prexpwa = re.compile(r'^\(XGetWindowProperty\[[A-Z_]+\] failed .*$', re.M)
 prewh = re.compile(r'^  Height: ([0-9]+)$', re.M)
 preww = re.compile(r'^  Width: ([0-9]+)$', re.M)
 
+## alias thread object
+myrunner=None
+pollrunner=False
+
+class AliasEntry:
+    def __init__(self,master):
+        self.name=StringVar()
+        self.text=StringVar()
+
+        self.namestring=None
+        self.textstring=None
+        self.okayclicked=False
+        self.master=master
+        
+        caption = "Alias name:"
+        Label(master, text=caption).pack(side=LEFT)
+        e = Entry(master,textvariable=self.name)
+        e.pack(side=LEFT)
+
+        e.focus_set()
+
+        caption = "Alias text:"
+        Label(master, text=caption).pack(side=LEFT)
+        e = Entry(master,textvariable=self.text)
+        e.pack(side=LEFT)
+
+        b=Button(master, text="Okay", command=self.okay)
+        b.pack(side=LEFT)
+
+        b=Button(master, text="Cancel", command=master.destroy)
+        b.pack(side=LEFT)
+
+    def okay(self):
+        self.namestring=self.name.get()
+        self.textstring=self.text.get()
+        self.okayclicked=True
+        self.master.destroy()
+
+class AliasRunner(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+
+    def run(self):
+        self.root = Tk()
+        self.ae = AliasEntry(self.root)
+
+        w = self.root.winfo_screenwidth()/2
+        h = self.root.winfo_screenheight()/2
+        self.root.geometry("+%d+%d" % (w, h))
+
+        self.root.mainloop()        
+
+        
 def sighangup(signum, frame):
     global done
     disconnect()
@@ -1037,7 +1091,34 @@ def bringXApp(name):
         fpO.flush()
         stopped = True
 
-        
+def inputAlias(name):
+    global stopped,pollrunner,myrunner
+    try:
+        if not stopped:
+            if not pollrunner:
+                myrunner=AliasRunner()
+                myrunner.start()
+                pollrunner=True
+                
+                fpO.write('Success\n')
+                fpO.flush()
+
+            else:
+                fpO.write('Failure: Alias input window is already active\n')
+                fpO.flush()
+
+        else:
+            fpO.write('Failure: Server is stopped, please resume it before continuing\n')
+            fpO.flush()
+
+    except (OSError) as e:
+        mess = 'Failure: ' + str(e)
+        print mess
+        fpO.write(mess+'\n')
+        fpO.flush()
+        stopped = True
+            
+            
 fdic = { 
     "getXCtx": getXCtx, 
     "sendXText" : sendXText,
@@ -1049,6 +1130,7 @@ fdic = {
     "bringXApp" : bringXApp,
     "waitXWindow" : waitXWindow,
     "hideXWindow" : hideXWindow,
+    "inputAlias":inputAlias,
     }
 
 if __name__ == "__main__":
