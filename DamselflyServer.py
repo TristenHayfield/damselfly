@@ -1,3 +1,4 @@
+
 #!/usr/bin/python
 
 # Damselfly Copyright (C) 2013 Tristen Hayfield GNU GPL 3+
@@ -23,8 +24,7 @@ import subprocess
 import re
 import time
 import signal
-from Tkinter import *
-import threading
+
 
 myName = 'DamselflyServer'
 myVersion='2013-09-30'
@@ -40,6 +40,8 @@ if config.read(os.path.expanduser('~/.damselfly.cfg')) == []:
 ## paths for sweet fifo action
 
 natLinkPath = config.get("paths","natLinkPath")
+python27Path = config.get("paths","python27Path")
+damselflyPath = config.get("paths","damselflyPath")
 
 serverOut = natLinkPath + '/damselServerOut'
 serverIn = natLinkPath + '/damselServerIn'
@@ -75,57 +77,7 @@ prewh = re.compile(r'^  Height: ([0-9]+)$', re.M)
 preww = re.compile(r'^  Width: ([0-9]+)$', re.M)
 
 ## alias thread object
-myrunner=None
-pollrunner=False
-
-class AliasEntry:
-    def __init__(self,master):
-        self.name=StringVar()
-        self.text=StringVar()
-
-        self.namestring=None
-        self.textstring=None
-        self.okayclicked=False
-        self.master=master
-        
-        caption = "Alias name:"
-        Label(master, text=caption).pack(side=LEFT)
-        e = Entry(master,textvariable=self.name)
-        e.pack(side=LEFT)
-
-        e.focus_set()
-
-        caption = "Alias text:"
-        Label(master, text=caption).pack(side=LEFT)
-        e = Entry(master,textvariable=self.text)
-        e.pack(side=LEFT)
-
-        b=Button(master, text="Okay", command=self.okay)
-        b.pack(side=LEFT)
-
-        b=Button(master, text="Cancel", command=master.destroy)
-        b.pack(side=LEFT)
-
-    def okay(self):
-        self.namestring=self.name.get()
-        self.textstring=self.text.get()
-        self.okayclicked=True
-        self.master.destroy()
-
-class AliasRunner(threading.Thread):
-    def __init__(self):
-        threading.Thread.__init__(self)
-
-    def run(self):
-        self.root = Tk()
-        self.ae = AliasEntry(self.root)
-
-        w = self.root.winfo_screenwidth()/2
-        h = self.root.winfo_screenheight()/2
-        self.root.geometry("+%d+%d" % (w, h))
-
-        self.root.mainloop()        
-
+aliasprocess=None
         
 def sighangup(signum, frame):
     global done
@@ -192,7 +144,7 @@ def connect():
    
 
 def disconnect():
-    global fpO, fpI, connected, stopped
+    global fpO, fpI, connected, stopped, aliasprocess
 
     try:
         if fpO is not None:
@@ -208,6 +160,12 @@ def disconnect():
         stopped = True
         print 'Disconnected'
 
+        if aliasprocess is not None:
+            ep.unregister(aliasprocess.stdout)
+            aliasprocess.kill()
+            aliasprocess=None
+            
+
         print 'Removing FIFOs ... ',
         if os.path.exists(serverOut):
             os.remove(serverOut)
@@ -221,6 +179,7 @@ def disconnect():
 
 
 def polo():
+    global aliasprocess
     while True:
         iev = ep.poll(1.0)
         if len(iev) != 0:                
@@ -229,8 +188,12 @@ def polo():
             elif iev[0][1] & select.EPOLLERR:
                 raise IOError("Unknown fifo error occurred")
             elif iev[0][1] & select.EPOLLHUP:
-                print "hangup event, stopping polling"
-                break
+                if iev[0][0]==fpI.fileno():
+                    print "hangup event, stopping polling"
+                    break
+                else:
+                    ep.unregister(iev[0][0])
+                    aliasprocess=None
             else:
                 raise Exception("unknown event")
 
@@ -1092,14 +1055,13 @@ def bringXApp(name):
         stopped = True
 
 def inputAlias(name):
-    global stopped,pollrunner,myrunner
+    global stopped,aliasprocess
     try:
         if not stopped:
-            if not pollrunner:
-                myrunner=AliasRunner()
-                myrunner.start()
-                pollrunner=True
-                
+            if aliasprocess is None:
+                aliasprocess = subprocess.Popen([python27Path,damselflyPath+'/test.py'], stdout = subprocess.PIPE, stderr = open(os.devnull,'w'))
+                ep.register(aliasprocess.stdout, select.EPOLLIN | select.EPOLLERR | select.EPOLLHUP)
+
                 fpO.write('Success\n')
                 fpO.flush()
 
@@ -1111,14 +1073,30 @@ def inputAlias(name):
             fpO.write('Failure: Server is stopped, please resume it before continuing\n')
             fpO.flush()
 
-    except (OSError) as e:
+    except (OSError, subprocess.CalledProcessError, WindowNotFound) as e:
         mess = 'Failure: ' + str(e)
         print mess
         fpO.write(mess+'\n')
         fpO.flush()
         stopped = True
             
-            
+def sendAlias(name):
+    global stopped
+    try:
+        if not stopped:
+            aliasname=aliasprocess.stdout.readline().strip()
+            aliasedtext=aliasprocess.stdout.readline().strip()
+        else:
+            fpO.write('Failure: Server is stopped, please resume it before continuing\n')
+            fpO.flush()
+    except (OSError, subprocess.CalledProcessError, WindowNotFound) as e:
+        mess = 'Failure: ' + str(e)
+        print mess
+        fpO.write(mess+'\n')
+        fpO.flush()
+        stopped = True
+
+        
 fdic = { 
     "getXCtx": getXCtx, 
     "sendXText" : sendXText,
@@ -1131,6 +1109,7 @@ fdic = {
     "waitXWindow" : waitXWindow,
     "hideXWindow" : hideXWindow,
     "inputAlias":inputAlias,
+    "sendAlias":sendAlias,
     }
 
 if __name__ == "__main__":
