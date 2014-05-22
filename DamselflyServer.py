@@ -76,7 +76,7 @@ prexpwa = re.compile(r'^\(XGetWindowProperty\[[A-Z_]+\] failed .*$', re.M)
 prewh = re.compile(r'^  Height: ([0-9]+)$', re.M)
 preww = re.compile(r'^  Width: ([0-9]+)$', re.M)
 
-## alias thread object
+## alias process
 aliasprocess=None
         
 def sighangup(signum, frame):
@@ -1059,7 +1059,7 @@ def inputAlias(name):
     try:
         if not stopped:
             if aliasprocess is None:
-                aliasprocess = subprocess.Popen([python27Path,damselflyPath+'/test.py'], stdout = subprocess.PIPE, stderr = open(os.devnull,'w'))
+                aliasprocess = subprocess.Popen([python27Path,damselflyPath+'/InputAlias.py'], stdout = subprocess.PIPE, stderr = open(os.devnull,'w'))
                 ep.register(aliasprocess.stdout, select.EPOLLIN | select.EPOLLERR | select.EPOLLHUP)
 
                 fpO.write('Success\n')

@@ -44,6 +44,7 @@ fpO = None
 fpI = None
 
 windowCache = {}
+capslock=False
 
 class ConnectionDropped(Exception):
     def __init__(self, value = None):
@@ -370,21 +371,25 @@ class InputAlias(ActionBase):
 
 ## neither autoformat nor pause are considered atm
 class XText(DynStrActionBase):
-    def __init__(self, spec, static = False, space = True, title = False, upper = False, lower = False, replace = ''):
+    def __init__(self, spec, static = False, space = True, title = False, upper = False, lower = False, replace = '', check_capslock=False):
         DynStrActionBase.__init__(self, spec = str(spec), static = static)
         self.space = space
         self.title = title
         self.upper = upper
         self.lower = lower
         self.replace = replace
+        self.check_capslock = check_capslock
 
     def _parse_spec(self, spec):
         self._pspec = spec
         return self
 
     def _execute_events(self, events):
+        global capslock
         tspec = self._pspec
-        if self.title:
+        if self.check_capslock and capslock:
+            tspec = tspec.upper()
+        elif self.title:
             tspec = tspec.title()
         elif self.upper:
             tspec = tspec.upper()
@@ -446,7 +451,7 @@ def ignore():
 
 class DictateRule(MappingRule):
     mapping = {
-        "<text>" : XText("%(text)s"),
+        "<text>" : XText("%(text)s", check_capslock = True) ,
         }
     extras = [
         Dictation("text")
@@ -466,23 +471,28 @@ class AliasRule(CompoundRule):
     def _process_recognition(self, node, extras):
         result=InputAlias().execute()
         print 'result: ',result
-        
+
+def togglecapslock():
+    global capslock
+    capslock=not capslock
+    
 #####################################
 # file
 #####################################
 
 class FileRule(MappingRule):
     mapping = {
-        "user":XText("usr"),
-        "(bin|been)" : XText("bin"),
-        "Lib" : XText("lib"),
-        "et cetera" : XText("etc"),
-        "temp" : XText("tmp"),
-        "variable" : XText("var"),
-        "optional" : XText("opt"),
-        "mount" : XText("mnt"),
-        "source" : XText("src"),
-        "previous" : XText(".."),
+        "user":XText("usr/") ,
+        "(bin|been)" : XText("bin/") ,
+        "Lib" : XText("lib/") ,
+        "et cetera" : XText("etc/") ,
+        "temp" : XText("tmp/") ,
+        "variable" : XText("var/") ,
+        "optional" : XText("opt/") ,
+        "mount" : XText("mnt/") ,
+        "source" : XText("src/") ,
+        "hemo" : XText("home/") ,
+        "previous" : XText("../") ,
         }
         
 myFile = FileRule()
@@ -569,7 +579,7 @@ class CharkeyRule(MappingRule):
 ##        "eight" : XKey("8"),
 ##        "nine" : XKey("9"),
 ##        "zero" : XKey("0"),
-        "dot" : XText("."),
+        "dot" : XText(".") ,
         "plus" : XText("+"),
         "(minus | hyphen)" : XText("-"),
         "stress" : XText("_"),
@@ -656,7 +666,7 @@ class EmacsEditRule(MappingRule):
         "wedge": XKey("up,end,enter,c-y"),
         "save": XKey("c-x,c-s"),
         "open": XKey("c-x,c-f"),
-        "open <text>": XKey("c-x,c-f,tab:2,w-c,c-s")+XText("%(text)s"),
+        "open <text>": XKey("c-x,c-f,tab:2,w-c,c-s")+XText("%(text)s") ,
         "swap": XKey("c-x,o"),
         "mark": XKey("c-space"),
         "mark from <text> to <other>": XKey("c-s") + XText("%(text)s") + XKey("enter,c-r,enter:2,c-space,c-s") + XText("%(other)s") + XKey("enter"),
@@ -667,6 +677,7 @@ class EmacsEditRule(MappingRule):
         "pinch up from <text> to <other>": XKey("c-r") + XText("%(text)s") + XKey("enter,c-s,enter:2,c-space,c-r") + XText("%(other)s") + XKey("enter,m-w"),
         "pinch in from <text> to <other>": XKey("c-r") + XText("%(text)s") + XKey("enter,c-s,enter:2,c-space,c-s") + XText("%(other)s") + XKey("enter,m-w"),
         "swipe": XKey("c-space,c-e,m-w"),
+        "grab": XKey("a-b,c-space,a-f,m-w"),
         "lift": XKey("c-w"),
         "quit": XKey("c-g"), #+ XText("keyboard-quit")  + XKey("enter"),
         "solo": XKey("c-x,1"),
@@ -742,9 +753,11 @@ class EmacsEditRule(MappingRule):
         "mini quit" : XKey("w-o,c-g"),
         "up case" : XKey("a-c"),
         "evaluate" : XKey("c-x,c-e"),
+        "determine" : XKey("c-u,c-x,c-e"),
         "edit" : XKey("a-e"),
+        "alter" : XKey("a-p:2"),
         "sensitive" : XKey("a-c"),
-        "yay" : XKey("y"),
+        "zap" : XKey("y"),
         "nay" : XKey("n"),
         "begin":XKey("m-x")  + XText("goto-first-nonblank") + XKey("enter"),
         }
@@ -842,6 +855,8 @@ class PythonLanguageRule(MappingRule):
         "true" : XText("True"),
         "false" : XText("False"),
         "else" : XText("else:"),
+        "else if" : XText("elif:"),
+        "else if <text>" : XText("elif %(text)s:"),
         "if" : XText("if") + XKey('space'),
         "if <text>" : XText("if %(text)s:"),
         "import" : XText("import") + XKey('space'),
@@ -1050,6 +1065,7 @@ class ControllerRule(MappingRule):
         "stop dictate" : Function(ignore) + Function(undictate),
         "start file" : Function(startfile),
         "stop file" : Function(stopfile),
+        "toggle capslock" : Function(togglecapslock),
         }
 
     
