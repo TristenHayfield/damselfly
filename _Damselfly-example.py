@@ -475,7 +475,27 @@ class AliasRule(CompoundRule):
 def togglecapslock():
     global capslock
     capslock=not capslock
-    
+
+#####################################
+# regular expressions
+#####################################
+class RegularExpressionRule(MappingRule):
+    mapping = {
+        "group":XKey("backslash") + XText('(') + XKey("backslash") + XText(')') + XKey("left:2"),
+        "repeat":XKey("backslash") + XText('{') + XKey("backslash") + XText('}') + XKey("left:2"),
+        "limit":XKey("backslash") + XText('<') + XKey("backslash") + XText('>') + XKey("left:2"),
+        "another":XKey("backslash") + XText('|'),
+        }
+
+myRegularExpression = RegularExpressionRule()
+
+def stopRegularExpression():
+    myRegularExpression.disable()
+
+def startRegularExpression():
+    myRegularExpression.enable()
+        
+        
 #####################################
 # file
 #####################################
@@ -542,32 +562,32 @@ class DNSOverride(MappingRule):
 
 class CharkeyRule(MappingRule):
     mapping = {
-        "alpha" : XKey("a"),
-        "bravo" : XKey("b"),
-        "Charlie" : XKey("c"),
-        "delta" : XKey("d"),
-        "echo" : XKey("e"),
-        "foxtrot" : XKey("f"),
-        "golf" : XKey("g"),
-        "hotel" : XKey("h"),
-        "India" : XKey("i"),
-        "Jill" : XKey("j"),
-        "kilo" : XKey("k"),
-        "Lima" : XKey("l"),
-        "Mike" : XKey("m"),
-        "nova" : XKey("n"),
-        "Oscar" : XKey("o"),
-        "papa" : XKey("p"),
-        "Quebec" : XKey("q"),
-        "Romeo" : XKey("r"),
-        "sick" : XKey("s"),
-        "tango" : XKey("t"),
-        "unit" : XKey("u"),
-        "Victor" : XKey("v"),
-        "whiskey" : XKey("w"),
-        "xray" : XKey("x"),
-        "yankee" : XKey("y"),
-        "Zulu" : XKey("z"),
+        "alpha" : XText("a", check_capslock = True),
+        "bravo" : XText("b", check_capslock = True),
+        "Charlie" : XText("c", check_capslock = True),
+        "delta" : XText("d", check_capslock = True),
+        "echo" : XText("e", check_capslock = True),
+        "foxtrot" : XText("f", check_capslock = True),
+        "golf" : XText("g", check_capslock = True),
+        "hotel" : XText("h", check_capslock = True),
+        "India" : XText("i", check_capslock = True),
+        "Jill" : XText("j", check_capslock = True),
+        "kilo" : XText("k", check_capslock = True),
+        "Lima" : XText("l", check_capslock = True),
+        "Mike" : XText("m", check_capslock = True),
+        "nova" : XText("n", check_capslock = True),
+        "Oscar" : XText("o", check_capslock = True),
+        "papa" : XText("p", check_capslock = True),
+        "Quebec" : XText("q", check_capslock = True),
+        "Romeo" : XText("r", check_capslock = True),
+        "sick" : XText("s", check_capslock = True),
+        "tango" : XText("t", check_capslock = True),
+        "unit" : XText("u", check_capslock = True),
+        "Victor" : XText("v", check_capslock = True),
+        "whiskey" : XText("w", check_capslock = True),
+        "xray" : XText("x", check_capslock = True),
+        "yankee" : XText("y", check_capslock = True),
+        "Zulu" : XText("z", check_capslock = True),
         "<n>" : XText("%(n)d"),
 ##        "one" : XKey("1"),
 ##        "(to | two | too)" : XKey("2"),
@@ -706,12 +726,14 @@ class EmacsEditRule(MappingRule):
         "macro start" : XKey("c-x,lparen"),
         "macro end" : XKey("c-x,rparen"),
         "macro do" : XKey("c-x,e"),
+        "macro <n>" : XKey("c-u") + XText("%(n)d") + XKey("c-x,e"),
         "macro insert" : XKey("m-x") + XText("insert-kbd-macro") + XKey("enter"),
         "macro insert <text>" : XKey("m-x") + XText("insert-kbd-macro") + XKey("enter") + XText("%(text)s") + XKey("enter"),
         "macro name" : XKey("c-x,c-k,n"),
         "macro name <text>" : XKey("c-x,c-k,n") + XText("%(text)s") + XKey("enter"),
         "tap": XText("e"),
         "cast" : XKey("m-x"),
+        "cast <n>" : XKey("c-u") + XText("%(n)d") + XKey("m-x"),
         "cast <text>" : XKey("m-x") + XText("%(text)s") + XKey("enter"),
         "point" : XKey("c-x,r,space"),
         "point [<n>]" : XKey("c-x,r,space") + XText("%(n)d"),
@@ -751,7 +773,8 @@ class EmacsEditRule(MappingRule):
         "mini" : XKey("w-o"),
         "completions" : XKey("w-c"),
         "mini quit" : XKey("w-o,c-g"),
-        "up case" : XKey("a-c"),
+        "up case" : XKey("c-x,c-u"),
+        "lower case" : XKey("c-x,c-l"),
         "evaluate" : XKey("c-x,c-e"),
         "determine" : XKey("c-u,c-x,c-e"),
         "edit" : XKey("a-e"),
@@ -955,6 +978,7 @@ class ReadLineRule(MappingRule):
         "macro start" : XKey("c-x,lparen"),
         "macro end" : XKey("c-x,rparen"),
         "macro do" : XKey("c-x,e"),
+        "macro <n>" : XKey("c-u") + XText("%(n)d") + XKey("c-x,e"),
         "get": XKey("a-slash"),
         "yes": XText("yes") + XKey("enter"),
         "no": XText("no") + XKey("enter"),
@@ -1065,7 +1089,9 @@ class ControllerRule(MappingRule):
         "stop dictate" : Function(ignore) + Function(undictate),
         "start file" : Function(startfile),
         "stop file" : Function(stopfile),
-        "toggle capslock" : Function(togglecapslock),
+        "start expression" : Function(startRegularExpression),
+        "stop expression" : Function(stopRegularExpression),
+        "capslock" : Function(togglecapslock),
         }
 
     
@@ -1143,6 +1169,9 @@ def unload():
 
 myFile.disable()
 grammar.add_rule(myFile)
+
+myRegularExpression.disable()
+grammar.add_rule(myRegularExpression)
 
 myDictate.disable()
 grammar.add_rule(myDictate)
