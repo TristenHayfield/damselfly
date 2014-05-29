@@ -482,6 +482,10 @@ def togglecapslock():
 class RegularExpressionRule(MappingRule):
     mapping = {
         "group":XKey("backslash") + XText('(') + XKey("backslash") + XText(')') + XKey("left:2"),
+        "numeric":XKey("0,minus,1"),
+        "alphanumeric":XKey("a,minus,z,A,minus,Z,0,minus,1"),
+        "alphabetical":XKey("a,minus,z"),
+        "alpha nautical":XKey("A,minus,Z"),
         "repeat":XKey("backslash") + XText('{') + XKey("backslash") + XText('}') + XKey("left:2"),
         "limit":XKey("backslash") + XText('<') + XKey("backslash") + XText('>') + XKey("left:2"),
         "another":XKey("backslash") + XText('|'),
@@ -513,6 +517,7 @@ class FileRule(MappingRule):
         "source" : XText("src/") ,
         "hemo" : XText("home/") ,
         "previous" : XText("../") ,
+        "my home" : XText("~/") ,
         }
         
 myFile = FileRule()
@@ -708,8 +713,10 @@ class EmacsEditRule(MappingRule):
         "undo [<n>]" :  XKey("c-u,%(n)d,c-slash"),
         "exit stage": XKey("c-x,c-c"),
         "find" : XKey("c-s"),
+        "find again" : XKey("c-s,c-s"),
         "find <text>" : XKey("c-s") + XText("%(text)s", lower=True),
         "scout" : XKey("c-r"),
+        "scout again" : XKey("c-r,c-r"),
         "scout <text>" : XKey("c-r") + XText("%(text)s", lower=True),
         "hunt" : XKey("ca-s"),
         "track": XKey("cm-r"),
@@ -779,9 +786,11 @@ class EmacsEditRule(MappingRule):
         "determine" : XKey("c-u,c-x,c-e"),
         "edit" : XKey("a-e"),
         "alter" : XKey("a-p:2"),
+        "reap" : XKey("a-p"),
+        "sickle" : XKey("a-n"),
         "sensitive" : XKey("a-c"),
-        "zap" : XKey("y"),
-        "nay" : XKey("n"),
+        "confirm" : XKey("y"),
+        "deny" : XKey("n"),
         "begin":XKey("m-x")  + XText("goto-first-nonblank") + XKey("enter"),
         }
     extras = [
@@ -924,6 +933,8 @@ class CLanguageRule(MappingRule):
         "integer" : XText("int"),
         "return" : XText("return"),
         "equality" : XText("=="),
+        "more equal" : XText(">="),
+        "less equal" : XText("<="),
         "inequality" : XText("!="),
         "logical and" : XText("&&"),
         "logical or" : XText("||"),
@@ -1012,8 +1023,11 @@ class ReadLineRule(MappingRule):
 
 class BashRule(MappingRule):
     mapping = {
-        'cd' : XText('cd'),
+        'cd' : XText('cd') + XKey('space'),
+        'yo-yo' : XText('cd') + XKey('space,minus'),
         'cd <text> done' : XText('cd %(text)s') + XKey('enter'),
+        'copy' : XText('cp') + XKey('space'),
+        'completions' :XKey('tab:2'),
         'pause' : XKey('c-z'),
         'resume' : XText('fg'),
         'resume done' : XText('fg') + XKey('enter'), 
@@ -1028,16 +1042,16 @@ class BashRule(MappingRule):
         'dump' : XKey('m-star'),
         'basket' : XKey('m-{'),
         'variable' : XKey('m-$'),
-        'move' : XText('mv'),
+        'move' : XText('mv') + XKey('space'),
         'parent' : XText('../'),
-        'erase' : XText('rm'),
-        'touch' : XText('touch'),
+        'erase' : XText('rm') + XKey('space'),
+        'touch' : XText('touch') + XKey('space'),
         'touch <text>' : XText('touch %(text)s'),
-        'make directory' : XText('mkdir'),
+        'make directory' : XText('mkdir') + XKey('space'),
         'make directory <text>' : XText('mkdir %(text)s'),
-        'remove directory' : XText('rmdir'),
+        'remove directory' : XText('rmdir') + XKey('space'),
         'remove directory <text>' : XText('rmdir %(text)s'),
-        'git' : XText('git'),
+        'git' : XText('git') + XKey('space'),
         'git add' : XText('git add'),
         'git status' : XText('git status'),
         'git check out' : XText('git checkout'),
@@ -1050,13 +1064,16 @@ class BashRule(MappingRule):
         'git pull' : XText('git pull'),
         'git push' : XText('git push'),
         "are" : XText("R"),
+        "are command" : XText("R CMD"),
+        "are command <text>" : XText("R CMD %(text)s"),
         "debug are" : XText("R -d gdb"),
         'valgrind are' : XText('R -d "valgrind --tool=memcheck --leak-check=full --vgdb=yes --vgdb-error=0"'),
         "are command batch" : XText("R CMD BATCH"),
         "are no save" : XText("R --no-save"),
-        "permissions" : XText("chmod"),
+        "permissions" : XText("chmod") + XKey('space'),
         "permissions set executable" : XText("chmod u+x"),
         "permissions set all executable" : XText("chmod +x"),
+        "dirk <text>" : XText("%(text)s", space = False, lower = True),
         }
     extras = [
         Dictation("text"),
@@ -1064,22 +1081,30 @@ class BashRule(MappingRule):
 
 class GdbRule(MappingRule):
     mapping = {
-        "breakpoint" : XText("b"),
-        "continue" : XText("c"),
-        "backtrace" : XText("bt"),
-        "frame" : XText("f"),
-        "print" : XText("p"),
-        "set" : XText("set"),
-        "display" : XText("display"),
-        "delete" : XText("delete"),
-        "next" : XText("n"),
-        "step" : XText("s"),
-        "list" : XText("l"),
-        "terminate" : XText("k"),
-        "run" : XText("r"),
-        "exit" : XText("q"),
-        "help" : XText("help"),
+        "breakpoint" : XText("b") + XKey('space'),
+        "continue" : XKey("c,enter"),
+        "backtrace" : XKey("b,t,enter"),
+        "frame <n>" : XKey("f,space")+XText("%(n)d")+XKey("enter"),
+        "print" : XText("p") + XKey('space'),
+        "set" : XText("set") + XKey('space'),
+        "display" : XText("display") + XKey('space'),
+        "delete" : XText("delete") + XKey('space'),
+        "next" : XKey("n,enter"),
+        "step" : XKey("s,enter"),
+        "list" : XKey("l,enter"),
+        "until" : XKey("u,enter"),
+        "relist" : XKey("l,space,minus,enter"),
+        "terminate" : XKey("k,enter"),
+        "run" : XKey("r,enter"),
+        "exit" : XKey("q,enter"),
+        "help" : XText("help") + XKey('space'),
+        "confirm" : XKey("y,enter"),
+        "deny" : XKey("n,enter"),
+        "stop" : XKey("q,enter"),
         }
+    extras = [
+        IntegerRef("n", 1, 99),
+        ]
         
 class ControllerRule(MappingRule):
     mapping = {
@@ -1103,11 +1128,10 @@ grammar.add_rule(AliasRule())
 grammar.add_rule(DisconnectRule())
 grammar.add_rule(ResumeRule())
 grammar.add_rule(ControllerRule())
-grammar.add_rule(DNSOverride())
 grammar.add_rule(WMRule(context = xcon))
 
 ## charkey grammar
-charContext = XAppContext(u"(emacs:(?![^:].*:Text)|xterm|.*: (R|gdb|bash) \u2013 Konsole$)", usereg = True)
+charContext = XAppContext(u"(emacs:(?![^:].*:Text)|xterm|.*: (lisp\.run|R|gdb|bash) \u2013 Konsole$)", usereg = True)
 grammar.add_rule(CharkeyRule(context = charContext))
 
 ## emacs grammar
@@ -1126,7 +1150,7 @@ emacsMinibufContext = XAppContext('emacs: \*Minibuf-[0-9]+\*:', usereg = True)
 grammar.add_rule(EmacsMinibufRule(context = emacsMinibufContext))
 
 ## readline grammar
-rlContext = XAppContext(u"(xterm|.*: (R|gdb|bash) \u2013 Konsole$)", usereg = True)
+rlContext = XAppContext(u"(xterm|.*: (lisp\.run|R|gdb|bash) \u2013 Konsole$)", usereg = True)
 grammar.add_rule(ReadLineRule(context = rlContext))
 
 ## bash grammar
@@ -1140,6 +1164,7 @@ grammar.add_rule(GdbRule(context =GdbContext))
 PythonShellContext = XAppContext('emacs:[^:].*:Py', usereg = True)
 grammar.add_rule(PythonLanguageRule(context = PythonShellContext))
 
+grammar.add_rule(DNSOverride())
 
 
 ###rlContext = XAppContext("xterm")
