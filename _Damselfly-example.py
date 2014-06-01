@@ -45,6 +45,7 @@ fpI = None
 
 windowCache = {}
 capslock=False
+verbose=False
 
 class ConnectionDropped(Exception):
     def __init__(self, value = None):
@@ -126,19 +127,23 @@ def resumeServer():
 def getXCtx():
     if connected:
         try:
-            print 'Requesting X context... ',
+            if verbose:
+                print 'Requesting X context... ',
             fpO.write('getXCtx\n')
             fpO.flush()
-            print 'request sent'
+            if verbose:
+                print 'request sent'
 
             xctx = []
-            print 'waiting for response... ',
+            if verbose:
+                print 'waiting for response... ',
             xctx.append(fpI.readline().strip())
             if xctx[0].startswith('Failure'):
                 raise CommandFailure(xctx[0])
             xctx.append(fpI.readline().strip())
             xctx.append(int(fpI.readline().strip()))
-            print 'response received: ', xctx
+            if verbose:
+                print 'response received: ', xctx
             return xctx
         except (KeyboardInterrupt, IOError) as e:
             print "caught exception:" +  str(e) + 'aborting and disconnecting'
@@ -221,13 +226,16 @@ class XAppContext(Context):
 def dispatchAndHandle(mess):
     if connected:
         try:
-            print 'sending request'
+            if verbose:
+                print 'sending request'
             fpO.write(mess)
             fpO.flush()
-            print 'request sent'
-            print 'waiting for response... ',
+            if verbose:
+                print 'request sent'
+                print 'waiting for response... ',
             res = fpI.readline().strip()
-            print 'response received: ', res
+            if verbose:
+                print 'response received: ', res
         
             if res.startswith('Failure'):
                 raise CommandFailure(res)
@@ -410,7 +418,95 @@ class DoNothing(ActionBase):
         print self.message
         
 # custom grammars
+class Lexicon:
+    def __init__(self, words = {}, characters = {}):
+        self.words = words
+        self.characters = characters
+        self.active = False
 
+class TranslationGrammar(Grammar):
+    def __init__(self, name, description=None, context=None, lexicon=None):        
+        Grammar.__init__(self, name=name, description=description, context=context)
+        self.lexicon=lexicon
+
+    def enter_context(self):
+        Grammar.enter_context(self)
+        self.lexicon.active=True
+
+    def exit_context(self):
+        Grammar.exit_context(self)
+        self.lexicon.active=False
+
+
+class XTranslation(XText):
+    def __init__(self, spec, static = False, space = True, title = False, upper = False, lower = False, replace = '', check_capslock=False, lexica=[]):
+        XText.__init__(self, spec=spec, static=static, space=space, title=title, upper=upper, lower=lower, replace=replace, check_capslock=check_capslock)
+        
+        self.lexica=lexica
+
+    def get_active(self):
+        iactive=[]
+        for i, v in enumerate(self.lexica):
+            if v.active:
+                iactive.append(i)
+        return iactive
+
+    def translate(self,text):
+        lexica=self.get_active()
+
+        if len(lexica) == 0:
+            return text
+        
+        allsymbols=text.split()
+        
+        actions = []
+        mode=''
+        for symbol in allsymbols:
+            string=''
+            for l in lexica:
+                if symbol in l.words:
+                    if mode == 'word':
+                        string += ' ' + l[symbol]
+                    else:
+                        if mode != '':
+                            actions.append(XKey(string))
+                        string = l[symbol]
+                    mode = 'word'
+                    break
+            else:
+                for l in lexica:
+                    if symbol in l.characters:
+                        if mode == 'character':
+                            string += ',' + l[symbol]
+                        else:
+                            if mode != '':
+                                actions.append(XText(string))
+                            string = l[symbol]
+                        mode = 'character'
+                        break
+                else:
+                    if mode == 'word':
+                        string += ' ' + symbol
+                    else:
+                        if mode != '':
+                            actions.append(XKey(string))
+                        string = symbol
+                        mode = 'word'
+        if mode == 'word':
+            actions.append(XText(string))
+        else:
+            actions.append(XKey(string))
+
+        return actions
+
+    def _parse_spec(self, spec):
+        self._pspec = self.translate(spec)
+        return self
+
+    def _execute_events(self, events):
+        for action in enumerate(self._pspec):
+            if !action.execute():
+                return False
 
 
 # rules
@@ -713,9 +809,11 @@ class EmacsEditRule(MappingRule):
         "undo [<n>]" :  XKey("c-u,%(n)d,c-slash"),
         "exit stage": XKey("c-x,c-c"),
         "find" : XKey("c-s"),
+        "find yank" : XKey("c-s,c-y"),
         "find again" : XKey("c-s,c-s"),
         "find <text>" : XKey("c-s") + XText("%(text)s", lower=True),
         "scout" : XKey("c-r"),
+        "scout yank" : XKey("c-r,c-y"),
         "scout again" : XKey("c-r,c-r"),
         "scout <text>" : XKey("c-r") + XText("%(text)s", lower=True),
         "hunt" : XKey("ca-s"),
@@ -895,6 +993,7 @@ class PythonLanguageRule(MappingRule):
         "import <text>" : XText("import %(text)s"),
         "import all": XText("from  import *") + XKey("left:9"),
         "from <text> import <name>" : XText("from %(text)s import ") + XText("(%(name)s)",space = False, title = True),
+        "fear" : XText("for") + XKey('space'),
         "print" : XText("print") + XKey('space'),
         "global" : XText("global") + XKey('space'),
         "try" : XText("try:"),
@@ -903,6 +1002,8 @@ class PythonLanguageRule(MappingRule):
         "promote":XKey("c-c,c-r"),
         "demote":XKey("c-c,c-l"),
         "burgle":XKey("ca-h,a-w"),
+        "grow" : XText("+="),
+        "shrink" : XText("-="),
         }
     extras = [
         Dictation("text"),
@@ -927,10 +1028,10 @@ class CLanguageRule(MappingRule):
         "fear block" : XText("for(;;) ") + XKey("lbrace,home,down,enter,up,rbrace,home,enter,up,tab,up,right:2"),
         "while" : XText("while()") + XKey("left"),
         "while block" : XText("while() ") + XKey("lbrace,home,down,enter,up,rbrace,home,enter,up,tab"),
-        "void" : XText("void"),
-        "double" : XText("double"),
-        "constant" : XText("const"),
-        "integer" : XText("int"),
+        "void" : XText("void") + XKey('space'),
+        "double" : XText("double") + XKey('space'),
+        "constant" : XText("const") + XKey('space'),
+        "integer" : XText("int") + XKey('space'),
         "return" : XText("return"),
         "equality" : XText("=="),
         "more equal" : XText(">="),
@@ -1008,6 +1109,7 @@ class ReadLineRule(MappingRule):
         "clear": XKey("c-l"),
         "log out": XKey("c-d"),
         "break": XKey("c-c"),
+        "interrupt" : XKey("c-z"),
         }
     extras = [
         IntegerRef("n", 1, 99),
@@ -1103,7 +1205,7 @@ class GdbRule(MappingRule):
         "stop" : XKey("q,enter"),
         }
     extras = [
-        IntegerRef("n", 1, 99),
+        IntegerRef("n", 0, 99),
         ]
         
 class ControllerRule(MappingRule):
@@ -1131,7 +1233,7 @@ grammar.add_rule(ControllerRule())
 grammar.add_rule(WMRule(context = xcon))
 
 ## charkey grammar
-charContext = XAppContext(u"(emacs:(?![^:].*:Text)|xterm|.*: (lisp\.run|R|gdb|bash) \u2013 Konsole$)", usereg = True)
+charContext = XAppContext(u"(emacs:(?![^:].*:Text)|xterm|.*: (python2.7|lisp\.run|R|gdb|bash) \u2013 Konsole$)", usereg = True)
 grammar.add_rule(CharkeyRule(context = charContext))
 
 ## emacs grammar
@@ -1150,7 +1252,7 @@ emacsMinibufContext = XAppContext('emacs: \*Minibuf-[0-9]+\*:', usereg = True)
 grammar.add_rule(EmacsMinibufRule(context = emacsMinibufContext))
 
 ## readline grammar
-rlContext = XAppContext(u"(xterm|.*: (lisp\.run|R|gdb|bash) \u2013 Konsole$)", usereg = True)
+rlContext = XAppContext(u"(xterm|.*: (python2.7|lisp\.run|R|gdb|bash) \u2013 Konsole$)", usereg = True)
 grammar.add_rule(ReadLineRule(context = rlContext))
 
 ## bash grammar
@@ -1167,8 +1269,11 @@ grammar.add_rule(PythonLanguageRule(context = PythonShellContext))
 grammar.add_rule(DNSOverride())
 
 
-###rlContext = XAppContext("xterm")
-##grammar.add_rule(BashRule(context = rlContext))
+#translation_grammar=TranslationGrammar("French", context=emacsContext, lexicon=lexie)
+
+## myDictate.disable()
+## translation_grammar.add_rule(myDictate)
+## translation_grammar.load()
 
 def unload():
     global xcon, charContext, emacsContext, emacsDictContext, emacsCContext
