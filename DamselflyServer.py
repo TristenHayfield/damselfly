@@ -212,6 +212,7 @@ def doCmdOutputWithRetries(cmd, maxTries = 3, dt = 0.01):
             xp = subprocess.check_output(cmd, stderr = open(os.devnull,'w'))
             cmdSucceeded = True
         except subprocess.CalledProcessError as e:
+##             print "fail: ", cmd
             cmderr = e
             time.sleep(dt)
     if cmdSucceeded:
@@ -878,7 +879,7 @@ def focusWindowArgs(mode, value):
     elif mode == 'any':
         xp = doCmdOutputWithRetries(['xdotool', 'search', value]).split()
         tids = frozenset(map(int, xp))
-#        print 'tids:', tids
+##         print 'tids:', tids
         ids = findRootWindowClients(tids)
         if len(ids) > 0:
             cmd = ['xdotool','windowactivate', '--sync', str(ids[0])]
@@ -897,10 +898,10 @@ def focusWindowArgs(mode, value):
         raise InvalidArgs('Invalid argument to focusWindow: ' + tp)
 
     # this command will either fail with an error, complete almost immediately (success), or complete after a short pause and complain to stderr (fail)
-#    print cmd
+##     print cmd
     xp = subprocess.check_output(cmd)
     babby = prexpwa.search(xp)
-
+##     print xp
     if babby:
         raise WindowNotFound('Could not activate window: ' + value)
 
@@ -1025,7 +1026,7 @@ def bringXApp(name):
         timeout = float(fpI.readline().strip())
         if not stopped:
             try:
-                focusWindowArgs('any', winname)
+                focusWindowArgs('class', winname)
             except (subprocess.CalledProcessError, WindowNotFound) as e:
                 sp = subprocess.Popen([execname])
                 t0 = time.time()

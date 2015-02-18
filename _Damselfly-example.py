@@ -569,6 +569,8 @@ def togglecapslock():
 class RegularExpressionRule(MappingRule):
     mapping = {
         "group":XKey("backslash") + XText('(') + XKey("backslash") + XText(')') + XKey("left:2"),
+        "group left":XKey("backslash,lparen"),
+        "group right":XKey("backslash,rparen"),
         "numeric":XKey("0,minus,1"),
         "return":XKey("c-q,c-j"),
         "alphanumeric":XKey("a,minus,z,A,minus,Z,0,minus,9"),
@@ -576,6 +578,11 @@ class RegularExpressionRule(MappingRule):
         "alpha nautical":XKey("A,minus,Z"),
         "repeat":XKey("backslash") + XText('{') + XKey("backslash") + XText('}') + XKey("left:2"),
         "limit":XKey("backslash") + XText('<') + XKey("backslash") + XText('>') + XKey("left:2"),
+        "limit left":XKey("backslash,langle"),
+        "limit right":XKey("backslash,rangle"),
+        "symbol":XKey("backslash,underscore,langle,backslash,underscore,rangle,left:3"),
+        "symbol left":XKey("backslash,underscore,langle"),
+        "symbol right":XKey("backslash,underscore,rangle"),
         "another":XKey("backslash") + XText('|'),
         }
 
@@ -602,7 +609,6 @@ FileDictionary = {
     "mount" : XText("mnt/") ,
     "source" : XText("src/") ,
     "hemo" : XText("home/") ,
-    "previous" : XText("../") ,
     "flat" : XText("~/") ,
     }
 
@@ -642,6 +648,11 @@ class DNSOverride(MappingRule):
     extras = [
         Dictation("text")
         ]
+
+class ConvenienceRule(MappingRule):
+    mapping = {
+        "insert e-mail address":XText("tristen.hayfield@gmail.com"),
+        }
 
 ######################################################################
 # USER DEFINED RULES BELOW THIS POINT                                #
@@ -708,7 +719,7 @@ CharDictionary={
         "space" : XKey("space"),
         "quote" : XKey("dquote"),
         "tick" : XKey("squote"),
-##        "one" : XKey("1"),
+        "Uno" : XKey("1"),
         }
 
 CharKeywords={
@@ -728,6 +739,8 @@ class CharkeyRule(MappingRule):
         "semi" : XText(";"),
         "end" : XKey("end"),
         "<n>" : XText("%(n)d"),
+        "angle left" : XText('<'),
+        "angle right" : XText('>'),
         "brace left" : XText('{'),
         "brace right" : XText('}'),
         "pen left" : XText('('),
@@ -777,6 +790,14 @@ class EmacsEditRule(MappingRule):
         "skulk <n>" :  XKey("c-r,comma,c-r:%(n)d,enter"),
         "slink" :  XKey("c-s,comma,enter"),
         "slink <n>" :  XKey("c-s,comma,c-s:%(n)d,enter"),
+        "sneak" :  XKey("c-r,dot,enter"),
+        "sneak <n>" :  XKey("c-r,dot,c-r:%(n)d,enter"),
+        "slide" :  XKey("c-s,dot,enter"),
+        "slide <n>" :  XKey("c-s,dot,c-s:%(n)d,enter"),
+        "dive" :  XKey("ca-s,lbracket,dquote,squote,rbracket,enter"),
+        "dive <n>" :  XKey("ca-s,lbracket,dquote,squote,rbracket,c-r:%(n)d,enter"),
+        "duck" :  XKey("cm-r,lbracket,dquote,squote,rbracket,enter"),
+        "duck <n>" :  XKey("cm-r,lbracket,dquote,squote,rbracket,c-r:%(n)d,enter"),
         "del [<n>]" : XKey("del:%(n)d"),
         "rub [<n>]": XKey("backspace:%(n)d"),
         "kill": XKey("c-k"),
@@ -802,6 +823,7 @@ class EmacsEditRule(MappingRule):
         "pinch in from <text> to <other>": XKey("c-r") + XText("%(text)s") + XKey("enter,c-s,enter:2,c-space,c-s") + XText("%(other)s") + XKey("enter,m-w"),
         "swipe": XKey("c-space,c-e,m-w"),
         "grab": XKey("c-space,a-f,m-w"),
+        "steal": XKey("c-space,ca-f,m-w"),
         "lift": XKey("c-w"),
         "quit": XKey("c-g"), #+ XText("keyboard-quit")  + XKey("enter"),
         "solo": XKey("c-x,1"),
@@ -812,11 +834,15 @@ class EmacsEditRule(MappingRule):
         "undo [<n>]" :  XKey("c-u,%(n)d,c-slash"),
         "exit stage": XKey("c-x,c-c"),
         "find" : XKey("c-s"),
+        "find word" : XKey("a-s,w"),
+        "find symbol" : XKey("a-s,underscore"),
         "find flip" : XKey("pgdown,c-s:2"),
         "find yank" : XKey("c-s,c-y"),
         "find again" : XKey("c-s,c-s"),
         "find <text>" : XKey("c-s") + XText("%(text)s", lower=True),
         "scout" : XKey("c-r"),
+        "scout word" : XKey("a-s,w,c-r"),
+        "scout symbol" : XKey("a-s,underscore,c-r"),
         "scout flip" : XKey("pgup,c-r:2"),
         "scout yank" : XKey("c-r,c-y"),
         "scout again" : XKey("c-r,c-r"),
@@ -850,6 +876,7 @@ class EmacsEditRule(MappingRule):
         "man" : XKey("m-x,m,a,n,enter"),
         "man" : XKey("m-x,m,a,n,enter") + XText("%(text)s") + XKey("enter"),
         "cast" : XKey("m-x"),
+        "cast shell" : XKey("m-x,s,h,e,l,l,enter"),
         "cast <n>" : XKey("c-u") + XText("%(n)d") + XKey("m-x"),
         "cast <text>" : XKey("m-x") + XText("%(text)s") + XKey("enter"),
         "point" : XKey("c-x,r,space"),
@@ -904,6 +931,7 @@ class EmacsEditRule(MappingRule):
         "confirm" : XKey("y"),
         "deny" : XKey("n"),
         "begin":XKey("m-x")  + XText("goto-first-nonblank") + XKey("enter"),
+        "prance":XKey("end,enter"),
         }
     extras = [
         IntegerRef("n", 1, 99),
@@ -1011,7 +1039,7 @@ rLanguageLexicon = Lexicon(words = rLanguageWords, keywords = rLanguageKeywords)
 class RLanguageRule(MappingRule):
     mapping = {
         "comment":XText("##") + XKey("space"),
-        "block" : XKey("lbrace,home,down,enter,up,rbrace,home,enter,up,tab"),
+        "block" : XKey("lbrace,rbrace,left,enter:2,up,tab"),
         "bind" : XText("c()") + XKey("left"),
         "stop" : XText('stop("")') + XKey("left:2"),
         "stop if not" : XText("stopifnot()") + XKey("left"),
@@ -1031,6 +1059,7 @@ class RLanguageRule(MappingRule):
         "columns" : XText("ncol()") + XKey("left"),
         "rose" : XText("nrows()") + XKey("left"),
         "return" : XText("return"),
+        "Gorge" : XKey("c-c,del"),
         }
         
 #######################################
@@ -1056,6 +1085,8 @@ pythonKeywords = {
     "grow" : XText("+="),
     "shrink" : XText("-="),
     "equality" : XText("=="),
+    "biggish" : XText(">="),
+    "smallish" : XText("<="),
     }
 
 pythonLexicon = Lexicon(words = pythonWords, keywords = pythonKeywords, characters = pythonCharacters)        
@@ -1067,17 +1098,18 @@ class PythonLanguageRule(MappingRule):
         "class <text> inherits <name>" : XText("class") + XKey('space') + XText("%(text)s(%(name)s):",space = False, title = True),
         "constructor" : XText("__init__(self)"),
         "define constructor" : XText("def __init__(self,):")  + XKey("left:2"),
-        "define" : XText("def"),
+        "define" : XText("def ():") + XKey("left:3"),
         "define <text>" : XText("def")+ XKey('space') + XText("%(text)s():",space=False) + XKey("left:2"),
         "define method <text>" : XText("def %(text)s(self,):",camel = True) + XKey("left:2"),
-        "else if" : XText("elif:"),
+        "else if" : XText("elif :") + XKey("left"),
         "else if <text>" : XText("elif %(text)s:"),
-        "if" : XText("if") + XKey('space'),
+        "if" : XText("if :") + XKey('left'),
         "if <text>" : XText("if %(text)s:"),
         "import" : XText("import") + XKey('space'),
         "import <text>" : XText("import %(text)s"),
         "import all": XText("from  import *") + XKey("left:9"),
         "from <text> import <name>" : XText("from %(text)s import ") + XText("(%(name)s)",space = False, title = True),
+        "length":XText("len()") + XKey("left"),
         "comment" : XText("##") + XKey('space'),
         "comment <text>" : XText("## %(text)s"),
         "promote":XKey("c-c,c-r"),
@@ -1096,7 +1128,10 @@ class PythonLanguageRule(MappingRule):
 #######################################
 class LatexRule(MappingRule):
     mapping = {
-        "habitat <text>" : XKey("backslash") + XText("begin{%(text)s}") + XKey("enter,home,backslash") + XText("end{%(text)s}"),
+        "diacritic": XKey("backslash,dquote,lbrace,rbrace,left"),
+        "habitat <text>" : XKey("backslash") + XText("begin{%(text)s}") + XKey("tab,enter:2,home,backslash") + XText("end{%(text)s}") + XKey("tab,up,tab"),
+        "begin habitat" :  XKey("backslash") + XText("begin{}") + XKey("left"),
+        "end habitat" :  XKey("backslash") + XText("end{}") + XKey("left"),
         "itemize":XKey("home,backslash") + XText("item") + XKey("space"),
         "caption":XKey("backslash") + XText("caption{}") + XKey("left"),
         "centering":XKey("backslash") + XText("centering"),
@@ -1105,6 +1140,7 @@ class LatexRule(MappingRule):
         "sub subsection" : XKey("backslash") + XText("subsubsection{}") + XKey("left"),
         "sub subsection <text>" : XKey("backslash") + XText("subsubsection{%(text)s}"),
         "section" : XKey("backslash") + XText("section{}") + XKey("left"),
+        "section sign" : XKey("backslash,S"),
         "section <text>" : XKey("backslash") + XText("section{%(text)s}"),
         "use package" : XKey("backslash") + XText("usepackage{}") + XKey("left"),
         "use package <text>" : XKey("backslash") + XText("usepackage{%(text)s}") + XKey("left"),
@@ -1114,6 +1150,8 @@ class LatexRule(MappingRule):
         "new chunk" : XText("<<>>=") + XKey("left:3"),
         "code chunk" : XText("<<>>") + XKey("left:2"),
         "comment" : XKey("percent:2,space"),
+        "text bold" : XKey("backslash,t,e,x,t,b,f,lbrace,rbrace,left"),
+        "text italic" : XKey("backslash,t,e,x,t,i,t,lbrace,rbrace,left"),
         "bold font" : XKey("backslash,b,f,space"),
         "italic font" : XKey("backslash,i,t,space"),
         "emphasize font" : XKey("backslash,e,m,space"),
@@ -1124,6 +1162,7 @@ class LatexRule(MappingRule):
         "N dash" : XKey("hyphen:2"),
         "Quad" : XKey("backslash,q,u,a,d"),
         "new line" : XKey("backslash:2"),
+        "new page" : XKey("backslash") + XText("newpage"),
         "Q quad" : XKey("backslash,q,q,u,a,d"),
         "new label <text>" : XKey("backslash") + XText("label{%(text)s}"),
         "math mode": XKey("dollar:2,left"),
@@ -1134,6 +1173,8 @@ class LatexRule(MappingRule):
         "bounce <n>" :  XKey("c-s,dollar,c-s:%(n)d,enter"),
         "rebound" :  XKey("c-r,dollar,enter"),
         "rebound <n>" :  XKey("c-r,dollar,c-r:%(n)d,enter"),
+        "multicolumn" : XKey("backslash") + XText("multicolumn") + XKey("lbrace,rbrace,lbrace,rbrace,lbrace,rbrace,left:5"),
+        "multirow" : XKey("backslash") + XText("multirow") + XKey("lbrace,rbrace,lbrace,rbrace,lbrace,rbrace,left:5"),
         }
     extras = [
         IntegerRef("n", 1, 99),                
@@ -1151,6 +1192,8 @@ class LatexEquationRule(MappingRule):
     mapping = {
         "fraction": XKey("backslash,f,r,a,c,lbrace,rbrace,lbrace,rbrace,left:3"),
         "summation": XKey("backslash,s,u,m"),
+        "chapeau": XKey("backslash,h,a,t,lbrace,rbrace,left"),
+        "barista": XKey("backslash,b,a,r,lbrace,rbrace,left"),
         "product": XKey("backslash,p,r,o,d"),
         "logarithm": XKey("backslash,l,o,g"),
         "integral": XKey("backslash,i,n,t"),
@@ -1162,11 +1205,18 @@ class LatexEquationRule(MappingRule):
         "group left": XKey("backslash,l,e,f,t,lparen"),
         "group right": XKey("backslash,r,i,g,h,t,rparen"),
         "natural logarithm": XKey("backslash,l,n"),
+        "clip": XKey("backslash,l,e,f,t,lbracket,backslash,r,i,g,h,t,rbracket,left:7"),
+        "clip left": XKey("backslash,l,e,f,t,lbracket"),
+        "clip right": XKey("backslash,r,i,g,h,t,rbracket"),
         "Sigma": XKey("backslash,s,i,g,m,a"),
         "dolt": XKey("backslash,d,e,l,t,a"),
         "equivalent": XKey("backslash,e,q,u,i,v"),
         "similar": XKey("backslash,s,i,m"),
         "approximately": XKey("backslash,s,i,m,e,q"),
+        "unequal": XKey("backslash,n,e,q"),
+        "small equal": XKey("backslash,l,e,q"),
+        "great equal": XKey("backslash,g,e,q"),
+        "infinity": XKey("backslash,i,n,f,t,y"),
         }
 
 
@@ -1211,9 +1261,9 @@ cLanguageCharacters = {
 cLanguageLexicon = Lexicon(words = cLanguageWords, keywords = cLanguageKeywords, characters = cLanguageCharacters)           
 class CLanguageRule(MappingRule):
     mapping = {
-        "block" : XKey("lbrace,home,down,enter,up,rbrace,home,enter,up,tab"),
+        "block" : XKey("lbrace,rbrace,left,enter:2,up,tab"),
         "else" : XText("else"),
-        "else block" : XText("else ") + XKey("lbrace,home,down,enter,up,rbrace,home,enter,up,tab"),
+        "else block" : XText("else ") + XKey("lbrace,rbrace,left,enter:2,up,tab"),
         "else if" : XText("else if()") + XKey("left"),
         "else if block" : XText("else if()") + XKey("lbrace,home,down,enter,up,rbrace,home,enter,up,tab,a-f:2,right"),
         "if" : XText("if()") + XKey("left"),
@@ -1222,12 +1272,206 @@ class CLanguageRule(MappingRule):
         "fear block" : XText("for(;;) ") + XKey("lbrace,home,down,enter,up,rbrace,home,enter,up,tab,up,right:2"),
         "while" : XText("while()") + XKey("left"),
         "while block" : XText("while() ") + XKey("lbrace,home,down,enter,up,rbrace,home,enter,up,tab"),
-        "return" : XText("return"),
+        "return" : XText("return;"),
+        "return <n>" : XText("return %(n)d;"),
         "size of" : XText("sizeof()") + XKey("left"),
         "define" : XText("#define"),
         "include" : XText("#include <>") + XKey("left"),
         "comment" : XText("//"),
+        "double P" : XText("double *"),
+        "double P <text>" : XText("double * %(text)s"),
+        "void P" : XText("void *"),
+        "void P <text>" : XText("void * %(text)s"),
+        "integer P" : XText("int *"),
+        "integer P <text>" : XText("int * %(text)s"),
+        "float P" : XText("float *"),
+        "float P <text>" : XText("float * %(text)s"),
+        "burgle" : XKey("cm-h"),
+        "prologue" : XKey("cm-a"),
+        "epilogue" : XKey("cm-e"),
+        "devour" : XKey("c-c,c-d"),
+        "Gorge" : XKey("c-c,del"),
         }
+    extras = [
+        Dictation("text"),
+        IntegerRef("n", 0, 99),                
+        ]        
+    
+cppLanguageWords = {
+    "auto" : XText("auto"),
+    }
+
+cppLanguageCharacters = {
+    "standard":XText("std"),
+    "ref":XText("&"),
+    "scope" : XText("::"),
+    }
+
+cppLanguageLexicon = Lexicon(words = cppLanguageWords, characters = cppLanguageCharacters)
+    
+class CPPLanguageRule(MappingRule):
+    mapping = {
+        "C standard library":XText("cstdlib"),
+        "C size":XText(".size()"),
+        "C beginner":XText(".begin()"),
+        "C ender":XText(".end()"),
+        "output item":XText("<<"),
+        "input item":XText(">>"),
+        "see out":XText("cout"),
+        "fearless":XText("for()") + XKey("left"),
+        "auto ref":XText("auto&"),
+        "a vector":XText("vector<>") + XKey("left"),
+        "(a|an) <text> vector":XText("vector<>") + XKey("left") + XTranslation("%(text)s",lexica=[cLanguageLexicon,cppLanguageLexicon]),
+        }
+    extras = [
+        Dictation("text"),
+        ]        
+        
+#####################################
+# SQL
+#####################################
+
+sqlLanguageKeywords = {
+    "select":XText("SELECT"),
+    "where":XText("WHERE"),
+    "null":XText("NULL"),
+    "not":XText("NOT"),
+    "drop":XText("DROP"),
+    "unique":XText("UNIQUE ()") + XKey("left"),
+    "values":XText("VALUES ()") + XKey("left"),
+    "check":XText("CHECK ()") + XKey("left"),
+    "length":XText("LENGTH ()") + XKey("left"),
+    "grant":XText("GRANT"),
+    "from":XText("FROM"),
+    "onto":XText("TO"),
+    "revoke":XText("REVOKE"),
+    "like":XText("LIKE"),
+    "escape":XText("ESCAPE"),
+    "equality" : XText("="),
+    "biggish" : XText(">="),
+    "smallish" : XText("<="),
+    "inequality" : XText("<>"),
+    "and" : XText("AND"),
+    "or" : XText("OR"),
+    "between":XText("BETWEEN")
+    }
+
+sqlWords = {
+    "ID":XText("id"),
+    "deferrable":XText("DEFERRABLE"),
+    "deferred":XText("DEFERRED"),
+    "initially":XText("INITIALLY"),
+    "immediate":XText("IMMEDIATE"),
+    }
+    
+sqlLanguageLexicon = Lexicon(words = sqlWords, keywords = sqlLanguageKeywords)
+
+class SqlLanguageRule(MappingRule):
+    mapping = {
+        "constraint":XText("CONSTRAINT"),
+        "commit":XText("COMMIT;"),
+        "constraint <text>":XText("CONSTRAINT %(text)s"),
+        "foreign key":XText("FOREIGN KEY ()") + XKey("left"),
+        "foreign key <text>":XText("FOREIGN KEY (%(text)s)"),
+        "references":XText("REFERENCES ()") + XKey("left:2"),
+        "references <text>":XText("REFERENCES %(text)s()") + XKey("left"),
+        "block" : XKey("lparen,rparen,semicolon,left:2,enter:2,up,tab"),
+        "Boolean":XText("BOOLEAN"),
+        "binary":XText("BINARY"),
+        "binary <n>":XText("BINARY(%(n)d)"),
+        "variable binary":XText("VARBINARY"),
+        "variable binary <n>":XText("VARBINARY(%(n)d)"),
+        "long binary":XText("BLOB"),
+        "char":XText("CHAR"),
+        "char <n>":XText("CHAR(%(n)d)"),
+        "variable char":XText("VARCHAR"),
+        "variable char <n>":XText("VARCHAR(%(n)d)"),
+        "long char":XText("CLOB"),
+        "decimal":XText("DECIMAL"),
+        "decimal <n>":XText("DECIMAL(%(n)d)"),
+        "decimal <n> <i>":XText("DECIMAL(%(n)d,%(i)d)"),
+        "numeric":XText("NUMERIC"),
+        "numeric <n>":XText("NUMERIC(%(n)d)"),
+        "numeric <n> <i>":XText("NUMERIC(%(n)d,%(i)d)"),
+        "small integer":XText("SMALLINT"),
+        "integer":XText("INTEGER"),
+        "big integer":XText("BIGINT"),
+        "float":XText("FLOAT"),
+        "float <n>":XText("FLOAT(%(n)d)"),
+        "real":XText("REAL"),
+        "double precision":XText("DOUBLE PRECISION"),
+        "time":XText("TIME"),
+        "date":XText("DATE"),
+        "timestamp":XText("TIMESTAMP"),
+        "timestamp <n>":XText("TIMESTAMP(%(n)d)"),
+        "TimeZone":XText("TIMESTAMP WITH TIME ZONE"),
+        "TimeZone <n>":XText("TIMESTAMP WITH TIME ZONE(%(n)d)"),
+        "interval day":XText("INTERVAL DAY TO SECOND"),
+        "interval day <n>":XText("INTERVAL DAY TO SECOND(%(n)d)"),
+        "interval year":XText("INTERVAL YEAR TO MONTH"),
+        "primary key":XText("PRIMARY KEY"),
+        "create table":XText("CREATE TABLE") + XKey("space"),
+        "create table <text>":XText("CREATE TABLE %(text)s ();") + XKey("left:2,enter:2,up,tab"),
+        "drop table":XText("DROP TABLE ;") + XKey("left"),
+        "drop table <text>":XText("DROP TABLE %(text);") + XKey("left"),
+        "truncate table":XText("TRUNCATE TABLE ;") + XKey("left"),
+        "truncate table <text>":XText("TRUNCATE TABLE %(text);") + XKey("left"),
+        "alter table":XText("ALTER TABLE ;") + XKey("left"),
+        "alter table <text>":XText("ALTER TABLE %(text)s ;") + XKey("left"),
+        "add constraint":XText("ADD CONSTRAINT"),
+        "add constraint <text>":XText("ADD CONSTRAINT %(text)s"),
+        "alter constraint":XText("ALTER CONSTRAINT"),
+        "alter constraint <text>":XText("ALTER CONSTRAINT %(text)s"),
+        "add column":XText("ADD COLUMN"),
+        "add column <text>":XText("ADD COLUMN %(text)s"),
+        "alter column":XText("ALTER COLUMN"),
+        "alter column <text>":XText("ALTER COLUMN %(text)s"),
+        "drop constraint":XText("DROP CONSTRAINT"),
+        "drop constraint <text>":XText("DROP CONSTRAINT %(text)s"),
+        "drop column":XText("DROP COLUMN"),
+        "drop column <text>":XText("DROP COLUMN %(text)s"),
+        "insert into":XText("INSERT INTO ;") + XKey("left"),
+        "insert into <text>":XText("INSERT INTO %(text)s ()") + XKey("left"),
+        "delete from":XText("DELETE FROM ;") + XKey("left"),
+        "delete from <text>":XText("DELETE FROM %(text)s ;") + XKey("left"),
+        "on delete cascade":XText("ON DELETE CASCADE"),
+        "on delete null":XText("ON DELETE SET NULL"),
+        "on delete default":XText("ON DELETE SET DEFAULT"),
+        "on delete restrict":XText("ON DELETE RESTRICT"),
+        "on delete action":XText("ON DELETE NO ACTION"),
+        "on update cascade":XText("ON UPDATE CASCADE"),
+        "on update null":XText("ON UPDATE SET NULL"),
+        "on update default":XText("ON UPDATE SET DEFAULT"),
+        "on update restrict":XText("ON UPDATE RESTRICT"),
+        "on update action":XText("ON UPDATE NO ACTION"),
+        "sad":XText("SET DATA TYPE"),
+        "seal":XText("SET DEFAULT"),
+        "dime":XText("DEFERRABLE INITIALLY IMMEDIATE"),
+        "no dime":XText("NOT DEFERRABLE INITIALLY IMMEDIATE"),
+        "no died":XText("NOT DEFERRABLE INITIALLY DEFERRED"),
+        "crate":XText("CREATE GLOBAL TEMPORARY TABLE"),
+        "crate <text>":XText("CREATE GLOBAL TEMPORARY TABLE %(text)s"),
+        "late":XText("CREATE LOCAL TEMPORARY TABLE"),
+        "late <text>":XText("CREATE LOCAL TEMPORARY TABLE %(text)s"),
+        "deal":XText("DECLARE LOCAL TEMPORARY TABLE"),
+        "deal <text>":XText("DECLARE LOCAL TEMPORARY TABLE %(text)s"),
+        "care":XText("ON COMMIT PRESERVE ROWS"),
+        "cradle":XText("ON COMMIT DELETE ROWS"),
+        "wag":XText("WITH GRANT OPTION"),
+        "create index <text>":XText("CREATE INDEX %(text)s"),
+        "create unique index":XText("CREATE UNIQUE INDEX"),
+        "create unique index <text>":XText("CREATE UNIQUE INDEX %(text)s"),
+        "drop index":XText("DROP INDEX ;") + XKey("left"),
+        "drop index <text>":XText("DROP INDEX %(text)s;"),
+        "create role":XText("CREATE ROLE ;") + XKey("left"),
+        "create role <text>":XText("CREATE ROLE %(text)s;"),
+        }
+    extras = [
+        IntegerRef("n",1,999),
+        IntegerRef("i",1,999),
+        Dictation("text"),
+        ]        
+
     
 #####################################
 # readline
@@ -1270,8 +1514,8 @@ class ReadLineRule(MappingRule):
         "macro do" : XKey("c-x,e"),
         "macro <n>" : XKey("c-u") + XText("%(n)d") + XKey("c-x,e"),
         "get": XKey("a-slash"),
-        "yes": XText("yes") + XKey("enter"),
-        "no": XText("no") + XKey("enter"),
+        "big yes": XText("yes") + XKey("enter"),
+        "big no": XText("no") + XKey("enter"),
         "clamp": XKey("lbracket,rbracket,left"),
         "clamp <text>": XText("[%(text)s]"),
         "fix": XKey("lparen,rparen,left"),
@@ -1300,21 +1544,38 @@ class ReadLineRule(MappingRule):
 #####################################
 # bash
 #####################################
+bashCharacters = {
+    'print': XText(':p'),
+    'leading': XText(':h'),
+    'trailing': XText(':t'),
+    'remainder': XText(':r'),
+    'suffix': XText(':e'),
+    'sub': XText(':s///') + XKey("left:2"),
+    'G sub': XText(':gs///') + XKey("left:2"),
+    }
+
+    
 bashKeywords = {
     'CD' : XText('cd'),
     'move' : XText('mv'),
+    'ultimate' : XText('!$'),
+    'everything' : XText('!*.!*'),
     }
 
-bashLexicon = Lexicon(keywords = bashKeywords)
+bashLexicon = Lexicon(keywords = bashKeywords, characters = bashCharacters)
 
 class BashRule(MappingRule):
     mapping = {
+        "previous" : XText("../") ,
+        "current" : XText("./") ,
+        'repeat' : XText('!!'),
+        'parrot': XText('echo') + XKey('space'),
         'yo-yo' : XText('cd') + XKey('space,minus'),
-        'copy' : XText('cp') + XKey('space'),
+        'clone' : XText('cp') + XKey('space'),
         'completions' :XKey('tab:2'),
         'pause' : XKey('c-z'),
-        'resume' : XText('fg'),
-        'resume done' : XText('fg') + XKey('enter'), 
+        'foreground' : XText('fg'),
+        'foreground done' : XText('fg') + XKey('enter'), 
         'ground' : XText('bg'),
         'ground done' : XText('bg') + XKey('enter'),
         'help' : XText('help'),
@@ -1366,7 +1627,13 @@ class BashRule(MappingRule):
         "permissions" : XText("chmod") + XKey('space'),
         "permissions set executable" : XText("chmod u+x"),
         "permissions set all executable" : XText("chmod +x"),
+        "run":XText("./"),
         "dirk <text>" : XText("%(text)s", space = False, lower = True),
+        "LaTeX":XText("latex"),
+        "LaTeX <text>":XText("latex %(text)s"),
+        "plane tech":XText("tex"),
+        "PDF LaTeX":XText("pdflatex"),
+        "PDF LaTeX <text>":XText("pdflatex %(text)s"),
         }
     extras = [
         Dictation("text"),
@@ -1410,7 +1677,7 @@ class AcroreadRule(MappingRule):
         
 class DictateRule(MappingRule):
     mapping = {
-        "<text>" : XTranslation("%(text)s", check_capslock = True, lexica=[CharLexicon,FileLexicon,pythonLexicon,cLanguageLexicon,bashLexicon,rLanguageLexicon]),
+        "<text>" : XTranslation("%(text)s", check_capslock = True, lexica=[CharLexicon,FileLexicon,pythonLexicon,cLanguageLexicon,cppLanguageLexicon,bashLexicon,rLanguageLexicon,sqlLanguageLexicon]),
         }
     extras = [
         Dictation("text")
@@ -1426,6 +1693,7 @@ def dictate():
                 
 class ControllerRule(MappingRule):
     mapping = {
+        "bring acroread" : BringXApp("acroread"),
         "start ignore" : Function(ignore),
         "stop ignore" : Function(unignore),
         "dictate" : Function(unignore) + Function(dictate),
@@ -1438,8 +1706,12 @@ class ControllerRule(MappingRule):
         "start math" : Function(startLatexEquation),
         "stop math" : Function(stopLatexEquation),
         }
+    extras = [
+        Dictation("text")    
+        ]
 
-    
+grammarList = []
+
 ## construct one grammar to rule them all
 xcon = XAppContext()
 grammar = Grammar("Damselfly")
@@ -1450,11 +1722,13 @@ grammar.add_rule(ResumeRule())
 grammar.add_rule(ControllerRule())
 grammar.add_rule(WMRule(context = xcon))
 
+grammarList.append(grammar)
 ## charkey grammar
 charContext = XAppContext(u"(emacs:(?![^:].*:Text)|xterm|.*: (python2.7|lisp\.run|R|gdb|bash) \u2013 Konsole$)", usereg = True)
 CharGrammar=TranslationGrammar("Character", context=charContext, lexicon=CharLexicon)
 CharGrammar.add_rule(CharkeyRule())
 CharGrammar.load()
+grammarList.append(CharGrammar)
 
 #grammar.add_rule(CharkeyRule(context = charContext))
 
@@ -1464,18 +1738,32 @@ grammar.add_rule(EmacsEditRule(context=emacsContext))
 grammar.add_rule(BringEmacsRule(context = xcon))
 grammar.add_rule(StartConsoleRule(context = xcon))
 
-emacsLatexContext = XAppContext('emacs:[^:].*:LaTeX$', usereg = True)
+emacsLatexContext = XAppContext('emacs:[^:].*:LaTeX($|/)', usereg = True)
 grammar.add_rule(LatexRule(context = emacsLatexContext))
 
-emacsCContext = XAppContext('emacs:[^:].*:C/l$', usereg = True)
+emacsCContext = XAppContext('emacs:[^:].*:(C/l$|C\+\+/l)', usereg = True)
 cLanguageGrammar = TranslationGrammar("CLanguage", context=emacsCContext, lexicon=cLanguageLexicon)
 cLanguageGrammar.add_rule(CLanguageRule())
 cLanguageGrammar.load()
+grammarList.append(cLanguageGrammar)
+
+emacsCPPContext = XAppContext('emacs:[^:].*:C\+\+/l', usereg = True)
+cppLanguageGrammar = TranslationGrammar("CPPLanguage", context=emacsCPPContext, lexicon=cppLanguageLexicon)
+cppLanguageGrammar.add_rule(CPPLanguageRule())
+cppLanguageGrammar.load()
+grammarList.append(cppLanguageGrammar)
+
+emacsSqlContext = XAppContext('emacs:[^:].*:SQL\[ANSI\]$', usereg = True)
+sqlLanguageGrammar = TranslationGrammar("SQLLanguage", context=emacsSqlContext, lexicon=sqlLanguageLexicon)
+sqlLanguageGrammar.add_rule(SqlLanguageRule())
+sqlLanguageGrammar.load()
+grammarList.append(sqlLanguageGrammar)
 
 emacsRContext = XAppContext(u'(emacs:[^:].*:ESS\[S\]$|.*: R \u2013 Konsole$)', usereg = True)
 rLanguageGrammar = TranslationGrammar("RLanguage", context=emacsRContext, lexicon=rLanguageLexicon)
 rLanguageGrammar.add_rule(RLanguageRule())
 rLanguageGrammar.load()
+grammarList.append(rLanguageGrammar)
 
 emacsDictContext = XAppContext('emacs:[^:].*:Text', usereg = True)
 grammar.add_rule(EmacsDictRule(context = emacsDictContext))
@@ -1492,6 +1780,7 @@ bashContext = XAppContext(u'(emacs:[^:].*:Shell|xterm|.*: bash \u2013 Konsole$)'
 bashGrammar = TranslationGrammar("Bash", context=bashContext, lexicon=bashLexicon)
 bashGrammar.add_rule(BashRule())
 bashGrammar.load()
+grammarList.append(bashGrammar)
 
 ## gdb grammar
 GdbContext = XAppContext(u'gdb \u2013 Konsole$', usereg = True)
@@ -1505,8 +1794,10 @@ pythonEmacsContext = XAppContext('emacs:[^:].*:Py', usereg = True)
 pythonGrammar = TranslationGrammar("Python", context=pythonEmacsContext, lexicon=pythonLexicon)
 pythonGrammar.add_rule(PythonLanguageRule())
 pythonGrammar.load()
+grammarList.append(pythonGrammar)
 
 grammar.add_rule(DNSOverride())
+grammar.add_rule(ConvenienceRule())
 
 #myDictate.disable()
 
@@ -1528,9 +1819,10 @@ def unload():
     rlContext = None
 
     windowCache = None
-    
-    if grammar.loaded:
-        grammar.unload()
+
+    for g in grammarList:
+        if g.loaded:
+            g.unload()
 
 myRegularExpression.disable()
 grammar.add_rule(myRegularExpression)
